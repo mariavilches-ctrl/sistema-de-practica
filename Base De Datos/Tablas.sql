@@ -7,4 +7,13 @@ CREATE TABLE Carrera (
 );
 
 
+CREATE TABLE Estudiante (
+    rut VARCHAR(12) PRIMARY KEY,
+    nombreCompleto VARCHAR(200) NOT NULL,
+    anoLectivo VARCHAR(10),
+    domicilio VARCHAR(50),
+    telefono VARCHAR(12),
+    correoInstitucional VARCHAR(100) NOT NULL,
+    idCarrera INT NOT NULL              -- FK a Carrera
+);
 
