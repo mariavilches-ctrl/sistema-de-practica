@@ -116,6 +116,14 @@ CREATE TABLE EvaluacionArea (
 );
 
 
+CREATE TABLE CompetenciaCentro (
+    idCompCentro INT IDENTITY(1,1) PRIMARY KEY,
+    idCentroPractica INT NOT NULL,        -- Centro donde se aplica la competencia
+    idEvaluacion INT NOT NULL,            -- Evaluación asociada
+    observacion VARCHAR(500)              -- Nota adicional del centro
+);
+
+
 
 
 
