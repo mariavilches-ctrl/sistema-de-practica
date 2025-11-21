@@ -101,7 +101,7 @@ CREATE TABLE CompetenciaPractica (
     idCompePra INT IDENTITY(1,1) PRIMARY KEY,
     idPractica INT NOT NULL,              -- FK a Practica
     idCompeDes INT NOT NULL,              -- FK a CompetenciaDesarrollo
-    nivel VARCHAR(50),                    
+    nivel VARCHAR(50),                    -- Basico, Intermedio o Avanzado
     fechaRegistro DATETIME DEFAULT GETDATE()
 );
 
