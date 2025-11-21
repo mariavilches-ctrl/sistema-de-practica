@@ -182,3 +182,28 @@ FOREIGN KEY (rutTutor) REFERENCES Tutor(rut);
 ALTER TABLE CompetenciaPractica
 ADD CONSTRAINT FK_CompePra_Practica
 FOREIGN KEY (idPractica) REFERENCES Practica(idPractica);
+
+
+ALTER TABLE CompetenciaPractica
+ADD CONSTRAINT FK_CompePra_CompeDes
+FOREIGN KEY (idCompeDes) REFERENCES CompetenciaDesarrollo(idCompeDes);
+
+
+ALTER TABLE EvaluacionArea
+ADD CONSTRAINT FK_EvalArea_Practica
+FOREIGN KEY (idPractica) REFERENCES Practica(idPractica);
+
+
+ALTER TABLE EvaluacionArea
+ADD CONSTRAINT FK_EvalArea_CompeDes
+FOREIGN KEY (idCompeDes) REFERENCES CompetenciaDesarrollo(idCompeDes);
+
+
+ALTER TABLE CompetenciaCentro
+ADD CONSTRAINT FK_CompCentro_Centro
+FOREIGN KEY (idCentroPractica) REFERENCES CentroPractica(idCentroPractica);
+
+
+ALTER TABLE CompetenciaCentro
+ADD CONSTRAINT FK_CompCentro_Evaluacion
+FOREIGN KEY (idEvaluacion) REFERENCES EvaluacionArea(idEvaluacion);
