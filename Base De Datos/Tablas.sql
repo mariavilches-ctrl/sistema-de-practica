@@ -142,3 +142,8 @@ FOREIGN KEY (rutEstudiante) REFERENCES Estudiante(rut);
 ALTER TABLE Practica
 ADD CONSTRAINT FK_Practica_CentroPractica
 FOREIGN KEY (idCentroPractica) REFERENCES CentroPractica(idCentroPractica);
+
+
+ALTER TABLE Practica
+ADD CONSTRAINT FK_Practica_Tutor
+FOREIGN KEY (rutTutor) REFERENCES Tutor(rut);
