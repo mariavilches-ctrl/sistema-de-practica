@@ -63,3 +63,14 @@ CREATE TABLE Practica (
 );
 
 
+CREATE TABLE Bitacora (
+    idBitacora INT IDENTITY(1,1) PRIMARY KEY,
+    idPractica INT NOT NULL,              -- FK a Practica
+    rutEstudiante VARCHAR(12) NOT NULL,   -- FK a Estudiante 
+    habilidadesDesarrolladas VARCHAR(500) NOT NULL,
+    desafios VARCHAR(500) NOT NULL,
+    logros VARCHAR(500) NOT NULL,
+    fechaRegistro DATETIME DEFAULT GETDATE()
+);
+
+
