@@ -177,3 +177,8 @@ FOREIGN KEY (idPractica) REFERENCES Practica(idPractica);
 ALTER TABLE InformeTutor
 ADD CONSTRAINT FK_InfTut_Tutor
 FOREIGN KEY (rutTutor) REFERENCES Tutor(rut);
+
+
+ALTER TABLE CompetenciaPractica
+ADD CONSTRAINT FK_CompePra_Practica
+FOREIGN KEY (idPractica) REFERENCES Practica(idPractica);
