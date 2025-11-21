@@ -82,4 +82,10 @@ CREATE TABLE InformeSupervisor (
 );
 
 
+CREATE TABLE InformeTutor (
+    idInformeT INT IDENTITY(1,1) PRIMARY KEY,
+    idPractica INT NOT NULL,              -- FK a Practica
+    idTutor VARCHAR(12) NOT NULL,        -- FK a Tutor
+    enlaceInformeT VARCHAR(MAX) NOT NULL  --URL de informe
+);
 
