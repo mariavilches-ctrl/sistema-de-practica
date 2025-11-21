@@ -106,6 +106,17 @@ CREATE TABLE CompetenciaPractica (
 );
 
 
+CREATE TABLE EvaluacionArea (
+    idEvaluacion INT IDENTITY(1,1) PRIMARY KEY,
+    idPractica INT NOT NULL,              -- Práctica evaluada
+    idCompeDes INT NOT NULL,              -- Competencia evaluada
+    puntaje INT NOT NULL,             -- Nivel de logro (ej: 1 a 5)
+    comentario VARCHAR(500),              -- Observaciones de la evaluación
+    fechaEvaluacion DATETIME DEFAULT GETDATE()
+);
+
+
+
 
 
 
