@@ -30,12 +30,24 @@ CREATE TABLE CentroPractica (
 
 
 CREATE TABLE Tutor (
-    rut VARCHAR(12) PRIMARY KEY,
+    idTutor INT IDENTITY(1,1) PRIMARY KEY,
+    rut VARCHAR(12) NOT NULL,
     nombre VARCHAR(150) NOT NULL,
     correo VARCHAR(200) NOT NULL,
     telefono VARCHAR(12),
     idCarrera VARCHAR(50) NOT NULL --FK a Carrera
 );
+
+CREATE TABLE Supervisor (
+    idSupervisor INT IDENTITY(1,1) PRIMARY KEY,
+    rut VARCHAR(12) NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    correo VARCHAR(150) NOT NULL,
+    telefono VARCHAR(12) NOT NULL,
+    cargo VARCHAR(50) NOT NULL,
+    idCentroPractica INT NOT NULL         --FK a CentroPractica
+);
+
 
 
 
