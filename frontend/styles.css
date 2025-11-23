@@ -108,7 +108,7 @@ body {
     font-weight: 600;
 }
 
-/* Sección tabla */
+/* Sección intro + botones */
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -134,7 +134,7 @@ body {
     background: #1d4ed8;
 }
 
-/* Tabla */
+/* Tablas */
 .table-wrapper {
     background: #ffffff;
     border-radius: 0.75rem;
@@ -170,6 +170,8 @@ th {
     padding: 0.2rem 0.5rem;
     border-radius: 999px;
     font-size: 0.75rem;
+    background: #e5e7eb;
+    color: #111827;
 }
 
 .badge-success {
@@ -180,4 +182,72 @@ th {
 .badge-warning {
     background: #fef3c7;
     color: #92400e;
+}
+
+/* Login */
+.login-body {
+    background: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-container {
+    background: #ffffff;
+    padding: 2rem 2.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+}
+
+.login-container h1 {
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.login-form {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.login-form label {
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.login-form input {
+    padding: 0.5rem 0.6rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.9rem;
+}
+
+.btn-full {
+    width: 100%;
+    margin-top: 0.6rem;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.8rem;
+}
+
+.login-footer {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 1rem;
 }
