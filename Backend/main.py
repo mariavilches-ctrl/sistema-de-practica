@@ -56,6 +56,25 @@ def status():
 def pagina_error(error):
     return render_template('404.html'), 404
 
+@app.route('/api/login', methods=['POST'])
+def login():
+    datos = request.get_json()
+    usuario = datos.get('username')
+    contrasena = datos.get('password')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM Usuarios WHERE username = ? AND password = ?"
+    cursor.execute(query, (usuario, contrasena))
+    user_data = cursor.fetchone()
+
+    conn.close()
+
+    if user_data:
+        return jsonify({"mensaje": "Inicio de sesión exitoso"}), 200
+    else:
+        return jsonify({"mensaje": "Credenciales inválidas"}), 401
 if __name__ == '__main__':
     
     #Crear tablas si no existen
