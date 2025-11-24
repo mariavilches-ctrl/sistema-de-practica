@@ -10,9 +10,13 @@ class ApiClient {
     
     public function __construct() {
         $this->baseUrl = API_BASE_URL;
+        // Verificar que la sesión esté iniciada antes de acceder
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start(); 
+        }
         $this->token = $_SESSION['jwt_token'] ?? null;
     }
-    
+
     /**
      * Realiza una petición HTTP a la API
      * @param string $endpoint Ruta del endpoint (ej: '/practicas')
