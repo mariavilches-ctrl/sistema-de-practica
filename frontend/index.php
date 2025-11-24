@@ -1,13 +1,39 @@
 <?php
-$pageTitle  = "Dashboard – Sistema de Prácticas UNACH";
+session_start();
+require_once 'config/api_config.php';
+require_once 'config/session_helper.php';
+
+$pageTitle = "Dashboard – Sistema de Prácticas UNACH";
 $activePage = "dashboard";
 
-// session_start(); // más adelante para validar login
+// TODO: Descomentar cuando el backend esté listo
+// requireLogin();
 
-// Datos de ejemplo
+// Datos de ejemplo (temporal - se reemplazará con API)
 $estudiantesEnPractica = 24;
-$practicasEnCurso      = 12;
-$centrosPractica       = 8;
+$practicasEnCurso = 12;
+$centrosPractica = 8;
+$practicasRecientes = [
+    ['estudiante' => 'Juan Pérez', 'tipo' => 'Práctica Profesional', 'centro' => 'Hospital Clínico', 'estado' => 'En curso'],
+    ['estudiante' => 'Ana Díaz', 'tipo' => 'Práctica I', 'centro' => 'Colegio Adventista', 'estado' => 'Pendiente'],
+];
+
+// Cuando el backend esté listo, reemplazar con:
+/*
+$api = new ApiClient();
+$stats = $api->getDashboardStats();
+$practicasRecientes = $api->getPracticas();
+
+if (isset($stats['error'])) {
+    $estudiantesEnPractica = 0;
+    $practicasEnCurso = 0;
+    $centrosPractica = 0;
+} else {
+    $estudiantesEnPractica = $stats['estudiantesEnPractica'] ?? 0;
+    $practicasEnCurso = $stats['practicasEnCurso'] ?? 0;
+    $centrosPractica = $stats['centrosPractica'] ?? 0;
+}
+*/
 
 include 'partials/header.php';
 include 'partials/sidebar.php';
@@ -16,7 +42,9 @@ include 'partials/sidebar.php';
     <header class="topbar">
         <h1>Dashboard</h1>
         <div class="user-info">
-            <span>Ignacio (Front)</span>
+            <span id="openUserModal" class="user-name-btn">
+                <?= htmlspecialchars(getUsuario()['nombre'] ?? 'Ignacio (Front)') ?>
+            </span>
         </div>
     </header>
 
@@ -51,21 +79,37 @@ include 'partials/sidebar.php';
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>Juan Pérez</td>
-                    <td>Práctica Profesional</td>
-                    <td>Hospital Clínico</td>
-                    <td><span class="badge badge-success">En curso</span></td>
-                </tr>
-                <tr>
-                    <td>Ana Díaz</td>
-                    <td>Práctica I</td>
-                    <td>Colegio Adventista</td>
-                    <td><span class="badge badge-warning">Pendiente</span></td>
-                </tr>
+                <?php if (empty($practicasRecientes)): ?>
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #6b7280;">
+                            No hay prácticas registradas
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($practicasRecientes as $p): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($p['estudiante']) ?></td>
+                            <td><?= htmlspecialchars($p['tipo']) ?></td>
+                            <td><?= htmlspecialchars($p['centro']) ?></td>
+                            <td>
+                                <?php
+                                $estado = $p['estado'] ?? 'Desconocido';
+                                $badgeClass = match($estado) {
+                                    'En curso' => 'badge-success',
+                                    'Pendiente' => 'badge-warning',
+                                    default => ''
+                                };
+                                ?>
+                                <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($estado) ?></span>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </section>
 </main>
+
+<!-- Modal de usuario (agregar aquí) -->
 <?php include 'partials/footer.php'; ?>
