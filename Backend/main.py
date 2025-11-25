@@ -1,80 +1,78 @@
 import os
-from flask import Flask, render_template, jsonify
+from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager
+import pyodbc
+from flask_cors import CORS
 from dotenv import load_dotenv
+
 
 # Cargar archivo .env
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app) # Habilitar CORS para todas las rutas
 
-# Configuración de la base de datos
-db_user = os.getenv('DB_USER')
-db_password = os.getenv('DB_PASSWORD')
-db_server = os.getenv('DB_SERVER')
-db_name = os.getenv('DB_NAME')
-drivername = 'ODBC Driver 17 for SQL Server'
+def get_db_connection():
+    try:
+        server = os.getenv('DB_SERVER')
+        database = os.getenv('DB_NAME')
+        username = os.getenv('DB_USER')
+        password = os.getenv('DB_PASSWORD')
 
-# Configuracion Flask BD
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    f"mssql+pyodbc://{db_user}:{db_password}@"
-    f"{db_server}/{db_name}?"
-    f"driver={drivername.replace(' ', '+')}"
-)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Configuracion Claves Secretas
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
-app.config['JWT_SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
-
-# Importacion de modelos
-db = SQLAlchemy(app)
-jwt = JWTManager(app)
-
-# Importar modelos para crear tablas
-try:
-    from . import models
-except ImportError:
-    pass
-
+        connection_string = (
+            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+            f"SERVER={server};"
+            f"DATABASE={database};"
+            f"UID={username};"
+            f"PWD={password}"
+        )
+        conn = pyodbc.connect(connection_string)
+        return conn
+    except Exception as e:
+        print("Error al conectar a la base de datos:", e)
+        return None
 #Rutas
 @app.route('/')
 
 def index():
-
-    data = {
-        'titulo': 'Sistema de Practica'
-    }
-
-    return render_template('index.html', data = data)
-
-@app.route('/api/status')
-def status():
-    return jsonify({"estado": "Conectado","backend": "Flask"}),
-
-def pagina_error(error):
-    return render_template('404.html'), 404
+    return "Sistema funcionando correctamente"
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    datos = request.get_json()
-    usuario = datos.get('username')
-    contrasena = datos.get('password')
+    try:
+        datos = request.get_json()
+        email = datos.get('usuario')
+        password = datos.get('password')
+
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"Success": False, "mensaje" : "Error de conexión a la base de datos"}), 500
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM Usuarios WHERE Email = ? AND Password = ?"
+        cursor.execute(query, (email, password))
+
+        usuario_encontrado = cursor.fetchone()
+
+        conn.close()
+
+        if usuario_encontrado:
+            return jsonify({
+                "Success": True,
+                "mensaje" : "login exitoso",
+                "datos": {"id": usuario_encontrado[0], "email": email} 
+            })
+        else:
+            return jsonify({
+                "Syccess": False,
+                "mensaje" : "Credenciales inválidas"
+            }), 401
+    except Exception as e:
+        return jsonify({
+            "Success": False,
+            "mensaje" : f"Error en el servidor: {str(e)}"
+        }), 500
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    query = "SELECT * FROM Usuarios WHERE username = ? AND password = ?"
-    cursor.execute(query, (usuario, contrasena))
-    user_data = cursor.fetchone()
-
-    conn.close()
-
-    if user_data:
-        return jsonify({"mensaje": "Inicio de sesión exitoso"}), 200
-    else:
-        return jsonify({"mensaje": "Credenciales inválidas"}), 401
 if __name__ == '__main__':
     
     #Crear tablas si no existen
