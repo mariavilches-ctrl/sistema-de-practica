@@ -78,13 +78,34 @@ def get_practicas():
     conn = get_db_connection()
     if not conn:
         return jsonify([]), 500
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM Practica")
+
+    columns = [column [0] for column in cursor.description]
+    results = []
+    for row in cursor.fetchall():
+        results.append(dict(zip(columns, row)))
+
+    conn.close()
+    return jsonify(results)
+
+@app.route('/api/bitacora', methods=['GET'])
+def get_bitacora():
+    conn = get_db_connection()
+    if not conn:
+        return jsonify([]), 500
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM Bitacora")
+
+    columns = [column [0] for column in cursor.description]
+    results = []
+    for row in cursor.fetchall():
+        results.append(dict(zip(columns, row)))
+    conn.close()
+    return jsonify(results)
     
 if __name__ == '__main__':
     
-    #Crear tablas si no existen
-    with app.app_context():
-        db.create_all()
-        print("Base de datos conectada y tablas creadas")
-
-    app.register_error_handler(404, pagina_error)
     app.run(debug=True, port= 5000)
