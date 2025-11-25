@@ -73,6 +73,12 @@ def login():
             "mensaje" : f"Error en el servidor: {str(e)}"
         }), 500
     
+@app.route('/api/practicas', methods=['GET'])
+def get_practicas():
+    conn = get_db_connection()
+    if not conn:
+        return jsonify([]), 500
+    
 if __name__ == '__main__':
     
     #Crear tablas si no existen
