@@ -70,9 +70,15 @@ class ApiClient {
     
     // Métodos específicos (se completarán cuando el backend esté listo)
     
+    /**
+     * login
+     * Backend currently expects 'usuario' (email) and 'password'
+     * Keep method signature the same but send the key the backend expects.
+     */
     public function login($correo, $password) {
         return $this->makeRequest('/login', 'POST', [
-            'correo' => $correo,
+            // note: backend expects 'usuario' (not 'correo')
+            'usuario' => $correo,
             'password' => $password
         ]);
     }

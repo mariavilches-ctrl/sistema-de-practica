@@ -18,14 +18,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $api = new ApiClient();
         $resultado = $api->login($correo, $password);
 
-        if (isset($resultado['token'])) {
-            // Guardar token/usuario en sesión
-            $_SESSION['jwt_token'] = $resultado['token'];
-            $_SESSION['usuario'] = $resultado['usuario'];
-            header('Location: index.php');
-            exit;
+        // ApiClient returns ['error' => true, 'message' => ...] on connection/http errors
+        if (!empty($resultado['error'])) {
+            $mensajeError = $resultado['message'] ?? 'Error al conectar con la API';
         } else {
-            $mensajeError = $resultado['message'] ?? 'Credenciales inválidas';
+            // Case 1: backend later might return a token (JWT) -> keep supporting it
+            if (!empty($resultado['token'])) {
+                $_SESSION['jwt_token'] = $resultado['token'];
+                // prefer 'usuario' field if backend returns it
+                $_SESSION['usuario'] = $resultado['usuario'] ?? $resultado['datos'] ?? null;
+                header('Location: index.php');
+                exit;
+            }
+
+            // Case 2: current backend returns Success + datos (no token)
+            $successKey = $resultado['Success'] ?? $resultado['syccess'] ?? $resultado['Syccess'] ?? null;
+            if ($successKey === true && !empty($resultado['datos'])) {
+                // store the datos payload on session so frontend can continue to work
+                $_SESSION['usuario'] = $resultado['datos'];
+                header('Location: index.php');
+                exit;
+            }
+
+            // Fallback: extract sensible message
+            $mensajeError = $resultado['mensaje'] ?? $resultado['message'] ?? 'Credenciales inválidas';
         }
     }
 }
