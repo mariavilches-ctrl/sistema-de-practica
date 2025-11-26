@@ -1,7 +1,8 @@
 <?php
 // Helper para manejo de sesiones
 function requireLogin() {
-    if (!isset($_SESSION['jwt_token'])) {
+    // Accept either a jwt_token (future backend) or usuario (current backend response)
+    if (!isset($_SESSION['jwt_token']) && !isset($_SESSION['usuario'])) {
         header('Location: login.php?error=' . urlencode('Debes iniciar sesión'));
         exit;
     }
