@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Case 2: current backend returns Success + datos (no token)
-            $successKey = $resultado['Success'] ?? $resultado['syccess'] ?? $resultado['Syccess'] ?? null;
+            $successKey = $resultado['Success'] ?? $resultado['success'] ?? $resultado['syccess'] ?? $resultado['Syccess'] ?? null;
             if ($successKey === true && !empty($resultado['datos'])) {
                 // store the datos payload on session so frontend can continue to work
                 $_SESSION['usuario'] = $resultado['datos'];

@@ -1,5 +1,6 @@
 import os
 from flask import Flask, jsonify, render_template, request
+import secrets
 from flask_sqlalchemy import SQLAlchemy
 import pyodbc
 from flask_cors import CORS
@@ -57,20 +58,23 @@ def login():
         conn.close()
 
         if usuario_encontrado:
+            # Generate a short random token for minimal compatibility with frontend
+            token = secrets.token_urlsafe(24)
             return jsonify({
-                "Success": True,
-                "mensaje" : "login exitoso",
-                "datos": {"id": usuario_encontrado[0], "email": email} 
+                "success": True,
+                "message": "login exitoso",
+                "token": token,
+                "datos": {"id": usuario_encontrado[0], "email": email}
             })
         else:
             return jsonify({
-                "Syccess": False,
-                "mensaje" : "Credenciales inválidas"
+                "success": False,
+                "message": "Credenciales inválidas"
             }), 401
     except Exception as e:
         return jsonify({
-            "Success": False,
-            "mensaje" : f"Error en el servidor: {str(e)}"
+            "success": False,
+            "message" : f"Error en el servidor: {str(e)}"
         }), 500
     
 @app.route('/api/practicas', methods=['GET'])
