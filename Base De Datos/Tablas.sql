@@ -124,6 +124,17 @@ CREATE TABLE CompetenciaCentro (
 );
 
 
+CREATE TABLE Usuarios (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    Email VARCHAR(200) NOT NULL UNIQUE,
+    Password VARCHAR(200) NOT NULL
+);
+
+INSERT INTO Usuarios (Email, Password)
+VALUES ('admin@admin.com', '1234');
+
+
+
 ALTER TABLE Estudiante
 ADD CONSTRAINT FK_Estudiante_Carrera
 FOREIGN KEY (idCarrera) REFERENCES Carrera(idCarrera);
