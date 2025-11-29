@@ -10,24 +10,32 @@ $activePage = "practicas";
 // requireLogin();
 
 // Datos de ejemplo (temporal)
-$practicas = [
-    [
-        'estudiante' => 'Juan Pérez',
-        'tipo' => 'Práctica Profesional',
-        'centro' => 'Hospital Clínico Chillán',
-        'supervisor_interno' => 'Prof. Soto',
-        'supervisor_externo' => 'Dr. Morales',
-        'estado' => 'En curso',
-    ],
-    [
-        'estudiante' => 'Ana Díaz',
-        'tipo' => 'Práctica I',
-        'centro' => 'Colegio Adventista',
-        'supervisor_interno' => 'Prof. García',
-        'supervisor_externo' => 'Sr. López',
-        'estado' => 'Pendiente',
-    ],
-];
+// Intentar obtener prácticas desde la API (si el backend está corriendo)
+$api = new ApiClient();
+$practicas = $api->getPracticas();
+
+// Si ocurre un error con la API, caer a datos de ejemplo para que la UI siga funcionando
+if (isset($practicas['error'])) {
+    $errorMessage = $practicas['message'] ?? 'Error al cargar prácticas';
+    $practicas = [
+        [
+            'estudiante' => 'Juan Pérez',
+            'tipo' => 'Práctica Profesional',
+            'centro' => 'Hospital Clínico Chillán',
+            'supervisor_interno' => 'Prof. Soto',
+            'supervisor_externo' => 'Dr. Morales',
+            'estado' => 'En curso',
+        ],
+        [
+            'estudiante' => 'Ana Díaz',
+            'tipo' => 'Práctica I',
+            'centro' => 'Colegio Adventista',
+            'supervisor_interno' => 'Prof. García',
+            'supervisor_externo' => 'Sr. López',
+            'estado' => 'Pendiente',
+        ],
+    ];
+}
 
 // Cuando el backend esté listo, reemplazar con:
 /*
