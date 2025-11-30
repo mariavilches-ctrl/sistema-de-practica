@@ -1,89 +1,39 @@
-<?php
-$pageTitle  = "Calendario de Sesiones – Sistema de Prácticas UNACH";
-$activePage = "calendario";
-// session_start();
 
-// Intentar cargar sesiones desde la API y caer a datos de ejemplo si no hay backend
-require_once 'config/api_config.php';
+<?php
+session_start();
+include __DIR__ . '/../config/api_config.php';
+include __DIR__ . '/../config/session_helper.php';
+requireLogin();
+
 $api = new ApiClient();
 $sesiones = $api->getSesiones();
-
-if (isset($sesiones['error'])) {
-    $sesiones = [
-        [
-            'fecha'        => '2025-03-10',
-            'hora_inicio'  => '09:00',
-            'hora_termino' => '11:00',
-            'estudiante'   => 'Juan Pérez',
-            'tipo'         => 'Práctica Profesional',
-            'actividad'    => 'Inducción en el centro',
-            'estado'       => 'Programada',
-        ],
-        [
-            'fecha'        => '2025-03-12',
-            'hora_inicio'  => '14:00',
-            'hora_termino' => '17:00',
-            'estudiante'   => 'Ana Díaz',
-            'tipo'         => 'Práctica I',
-            'actividad'    => 'Observación de clases',
-            'estado'       => 'Realizada',
-        ],
-    ];
-}
-
-include 'partials/header.php';
-include 'partials/sidebar.php';
 ?>
-<main class="main">
-    <header class="topbar">
-        <h1>Calendario de Sesiones</h1>
-        <div class="user-info">
-            <span>Ignacio (Front)</span>
-        </div>
-    </header>
-
-    <section class="content">
-        <div class="section-header">
-            <h2>Sesiones Programadas</h2>
-            <button class="btn-primary">+ Agregar sesión</button>
-        </div>
-
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href>
+<body>
+<?php include 'sidebar.php'; ?>
+<div class="main">
+    <div class="topbar"><h1>Calendario</h1></div>
+    <div class="content">
         <div class="table-wrapper">
             <table>
-                <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora Inicio</th>
-                    <th>Hora Término</th>
-                    <th>Estudiante</th>
-                    <th>Tipo de Práctica</th>
-                    <th>Actividad</th>
-                    <th>Estado</th>
-                </tr>
-                </thead>
+                <thead><tr><th>Fecha</th><th>Inicio</th><th>Término</th><th>Actividad</th></tr></thead>
                 <tbody>
                 <?php foreach ($sesiones as $s): ?>
                     <tr>
                         <td><?= htmlspecialchars($s['fecha']) ?></td>
-                        <td><?= htmlspecialchars($s['hora_inicio']) ?></td>
-                        <td><?= htmlspecialchars($s['hora_termino']) ?></td>
-                        <td><?= htmlspecialchars($s['estudiante']) ?></td>
-                        <td><?= htmlspecialchars($s['tipo']) ?></td>
+                        <td><?= htmlspecialchars($s['horaInicio']) ?></td>
+                        <td><?= htmlspecialchars($s['horaTermino']) ?></td>
                         <td><?= htmlspecialchars($s['actividad']) ?></td>
-                        <td>
-                            <?php if ($s['estado'] === 'Realizada'): ?>
-                                <span class="badge badge-success">Realizada</span>
-                            <?php elseif ($s['estado'] === 'Programada'): ?>
-                                <span class="badge badge-warning">Programada</span>
-                            <?php else: ?>
-                                <span class="badge"><?= htmlspecialchars($s['estado']) ?></span>
-                            <?php endif; ?>
-                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
-    </section>
-</main>
-<?php include 'partials/footer.php'; ?>
+    </div>
+</div>
+</body>
+</html>
+
