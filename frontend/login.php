@@ -1,8 +1,8 @@
 
 <?php
 session_start();
-include __DIR__ . '/../config/api_config.php';
-include __DIR__ . '/../config/session_helper.php';
+require_once 'config/api_config.php';
+require_once 'config/session_helper.php';
 
 $api = new ApiClient();
 $mensajeError = '';
@@ -29,22 +29,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <link rel="stylesheet"/head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    
+    <link rel="stylesheet" href="assets/CSS/styles.css">
+</head>
 <body class="login-body">
-<div class="login-container">
-    <h1>Iniciar sesión</h1>
-    <?php if (!empty($mensajeError)): ?>
-        <div class="alert-error"><?= htmlspecialchars($mensajeError) ?></div>
-    <?php endif; ?>
-    <form method="POST" class="login-form">
-        <label>Correo institucional</label>
-        <input type="email" name="correo" required>
-        <label>Contraseña</label>
-        <input type="password" name="password" required>
-        <button type="submit" class="btn-primary btn-full">Entrar</button>
-    </form>
-</div>
+    <div class="login-container">
+        <h1>Iniciar sesión</h1>
+        
+        <?php if (!empty($mensajeError)): ?>
+            <div class="alert-error"><?= htmlspecialchars($mensajeError) ?></div>
+        <?php endif; ?>
+
+        <form method="POST" class="login-form">
+            <label>Correo institucional</label>
+            <input type="email" name="correo" placeholder="ejemplo@unach.cl" required>
+            
+            <label>Contraseña</label>
+            <input type="password" name="password" placeholder="••••••" required>
+            
+            <button type="submit" class="btn-primary btn-full">Entrar</button>
+        </form>
+    </div>
 </body>
 </html>

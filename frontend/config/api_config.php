@@ -1,16 +1,16 @@
 <?php
 // Configuración de la API del backend
-define('API_BASE_URL', 'http://localhost:5000/api');
+define('API_BASE_URL', 'http://localhost:5000'); // Asegúrate que Python corre en el puerto 5000
 define('API_TIMEOUT', 30); // segundos
 
-// Clase helper para consumir la API
 class ApiClient {
     private $baseUrl;
     private $token;
     
     public function __construct() {
         $this->baseUrl = API_BASE_URL;
-        // Verificar que la sesión esté iniciada antes de acceder
+        
+        // Verificar si la sesión ya está activa antes de iniciarla
         if (session_status() === PHP_SESSION_NONE) {
             session_start(); 
         }
@@ -19,10 +19,6 @@ class ApiClient {
 
     /**
      * Realiza una petición HTTP a la API
-     * @param string $endpoint Ruta del endpoint (ej: '/practicas')
-     * @param string $method Método HTTP (GET, POST, PUT, DELETE)
-     * @param array|null $data Datos a enviar (se convierten a JSON)
-     * @return array Respuesta de la API o array con error
      */
     public function makeRequest($endpoint, $method = 'GET', $data = null) {
         $url = $this->baseUrl . $endpoint;
@@ -31,6 +27,9 @@ class ApiClient {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_TIMEOUT, API_TIMEOUT);
+        
+        // Importante: Desactivar verificación SSL si usas localhost sin certificados
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
         
         $headers = [
             'Content-Type: application/json',
@@ -52,15 +51,17 @@ class ApiClient {
         $curlError = curl_error($ch);
         curl_close($ch);
         
+        // Manejo de errores de conexión (ej: Python apagado)
         if ($curlError) {
-            return ['error' => true, 'message' => 'Error de conexión: ' . $curlError];
+            return ['error' => true, 'message' => 'Error de conexión con Backend: ' . $curlError];
         }
         
+        // Manejo de errores HTTP (400, 401, 500)
         if ($httpCode >= 400) {
             $errorData = json_decode($response, true);
             return [
                 'error' => true,
-                'message' => $errorData['message'] ?? 'Error en la petición',
+                'message' => $errorData['message'] ?? 'Error en la petición (Código: ' . $httpCode . ')',
                 'code' => $httpCode
             ];
         }
@@ -68,27 +69,21 @@ class ApiClient {
         return json_decode($response, true) ?? [];
     }
     
-    // Métodos específicos (se completarán cuando el backend esté listo)
-    
-    /**
-     * login
-     * Backend currently expects 'usuario' (email) and 'password'
-     * Keep method signature the same but send the key the backend expects.
-     */
+    // --- MÉTODOS DE LA API ---
+
     public function login($correo, $password) {
         return $this->makeRequest('/login', 'POST', [
-            // note: backend expects 'usuario' (not 'correo')
             'usuario' => $correo,
             'password' => $password
         ]);
     }
     
-    public function getDashboardStats() {
-        return $this->makeRequest('/dashboard/stats');
-    }
-    
     public function getPracticas() {
         return $this->makeRequest('/practicas');
+    }
+    
+    public function createPractica($data) {
+        return $this->makeRequest('/practicas', 'POST', $data);
     }
 
     public function getSesiones() {
@@ -98,17 +93,18 @@ class ApiClient {
     public function getTipos() {
         return $this->makeRequest('/tipos');
     }
-    
-    public function createPractica($data) {
-        return $this->makeRequest('/practicas', 'POST', $data);
-    }
-    
+
     public function getBitacora() {
         return $this->makeRequest('/bitacora');
     }
-    
-    public function createBitacora($data) {
-        return $this->makeRequest('/bitacora', 'POST', $data);
+
+    // --- AGREGADOS PARA QUE EL DASHBOARD FUNCIONE ---
+    public function getEstudiantes() {
+        return $this->makeRequest('/estudiantes');
+    }
+
+    public function getCentros() {
+        return $this->makeRequest('/centros');
     }
 }
 ?>

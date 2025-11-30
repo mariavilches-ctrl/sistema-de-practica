@@ -185,71 +185,100 @@ th {
 }
 
 /* Login */
+/* =========================
+   SECCIÓN DE LOGIN
+   ========================= */
 .login-body {
-    background: #111827;
+    background-color: #111827; /* Fondo oscuro */
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    margin: 0;
 }
 
 .login-container {
-    background: #ffffff;
-    padding: 2rem 2.5rem;
+    background-color: #ffffff;
+    padding: 2.5rem;
     border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    max-width: 380px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3); /* Sombra más pronunciada */
     width: 100%;
+    max-width: 400px; /* Ancho máximo fijo */
     text-align: center;
 }
 
 .login-container h1 {
+    color: #111827;
     margin-bottom: 0.5rem;
+    font-size: 1.8rem;
 }
 
 .login-subtitle {
     font-size: 0.9rem;
     color: #6b7280;
     margin-bottom: 1.5rem;
+    display: block; /* Asegura que ocupe su propia línea */
 }
 
+/* Formulario */
 .login-form {
-    text-align: left;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 1rem; /* Espacio entre inputs */
+    text-align: left;
 }
 
 .login-form label {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: #374151;
+    margin-bottom: 0.2rem;
 }
 
 .login-form input {
-    padding: 0.5rem 0.6rem;
-    border-radius: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
     border: 1px solid #d1d5db;
-    font-size: 0.9rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border-color 0.2s;
 }
 
+.login-form input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Botón de entrar */
 .btn-full {
     width: 100%;
-    margin-top: 0.6rem;
-}
-
-.alert-error {
-    background: #fee2e2;
-    color: #b91c1c;
-    padding: 0.5rem 0.7rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    margin-bottom: 0.8rem;
-}
-
-.login-footer {
-    font-size: 0.75rem;
-    color: #9ca3af;
     margin-top: 1rem;
+    background-color: #2563eb;
+    color: white;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-full:hover {
+    background-color: #1d4ed8;
+}
+
+/* Alertas de error */
+.alert-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: left;
 }
 
 /* Fondo oscuro transparente */
