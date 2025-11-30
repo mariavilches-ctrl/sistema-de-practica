@@ -1,7 +1,7 @@
 import os
 from flask import Flask, jsonify, request
 import secrets
-import pbcyod
+import pyodbc
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -275,6 +275,37 @@ def get_centros():
     except Exception:
         return jsonify([])
     
+@app.route('/api/practicas', methods=['POST'])
+def crear_practica():
+    data = request.json
+    conn = get_db_connection()
+    
+    if not conn:
+        return jsonify({'success': False, 'message': 'Error de conexión a BD'}), 500
+
+    try:
+        cursor = conn.cursor()
+        # Ejecutamos el Procedimiento Almacenado de SQL Server
+        cursor.execute("{CALL sp_InsertPractica (?, ?, ?, ?, ?, ?, ?, ?, ?)}", 
+                       (data['idEstudiante'], 
+                        data['idCentroPractica'], 
+                        data['idTutor'], 
+                        data['idSupervisor'], 
+                        data['tipo'], 
+                        data['fechaInicio'], 
+                        data['fechaTermino'], 
+                        data['actividades'], 
+                        data.get('evidenciaImg', ''))) # Enviamos vacío si no hay imagen
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Práctica guardada correctamente'}), 201
+        
+    except Exception as e:
+        print(f"Error SQL: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 if __name__ == '__main__':
     
     app.run(debug=True, port= 5000)

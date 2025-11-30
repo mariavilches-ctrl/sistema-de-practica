@@ -251,3 +251,67 @@ th {
     color: #9ca3af;
     margin-top: 1rem;
 }
+
+/* Fondo oscuro transparente */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.5); 
+    backdrop-filter: blur(2px);
+}
+
+/* La caja blanca del formulario */
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; 
+    padding: 2rem;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover { color: black; }
+
+/* Inputs del formulario */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Botón de guardar */
+.btn-save {
+    background-color: #28a745;
+    color: white;
+    padding: 12px;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+.btn-save:hover { background-color: #218838; }
+
+/* Mensajes de alerta */
+.alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; text-align: center; font-weight: bold;}
+.alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
