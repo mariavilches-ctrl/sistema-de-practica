@@ -1,16 +1,19 @@
 import os
-from flask import Flask, jsonify, request
 import secrets
+import webbrowser
+from threading import Timer
+from flask import Flask, jsonify, request, redirect
 import pyodbc
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Cargar archivo .env
+# 1. Cargar configuración
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Habilitar CORS para todas las rutas
+CORS(app)  # Habilitar CORS
 
+# 2. Conexión a Base de Datos (Configuración J9N4 Blindada)
 def get_db_connection():
     try:
         server = os.getenv('DB_SERVER')
@@ -18,7 +21,6 @@ def get_db_connection():
         username = os.getenv('DB_USER')
         password = os.getenv('DB_PASSWORD')
         
-        # Esta es la configuración EXACTA que funcionó en tu prueba
         connection_string = (
             f'DRIVER={{ODBC Driver 17 for SQL Server}};'
             f'SERVER={server};'
@@ -30,172 +32,149 @@ def get_db_connection():
         )
         
         conn = pyodbc.connect(connection_string)
-        print(f"✅ Conexión establecida correctamente a {database}") # Mensaje de control
+        # print(f"✅ Conectado a {database}") # Descomentar si quieres ver logs
         return conn
     except Exception as e:
-        print(f"❌ Error en get_db_connection: {e}")
+        print(f"❌ Error BD: {e}")
         return None
-# ---------------- RUTAS ----------------
+
+# ==========================================
+# RUTAS (Endpoints)
+# Nota: He quitado el '/api' para coincidir con tu ApiClient.php
+# ==========================================
 
 @app.route("/")
 def index():
-    return "Sistema funcionando correctamente"
+    return "Sistema de Prácticas - Backend Operativo"
 
-# Ruta de prueba: solo verifica conexión con la BD
-@app.route("/api/test-db")
+@app.route("/test-db")
 def test_db():
     conn = get_db_connection()
     if not conn:
-        return jsonify({"success": False, "message": "No se pudo conectar a la base de datos"}), 500
+        return jsonify({"success": False, "message": "Fallo conexión BD"}), 500
     conn.close()
-    return jsonify({"success": True, "message": "Conexión a la BD OK"})
+    return jsonify({"success": True, "message": "Conexión BD OK"})
 
-@app.route("/api/login", methods=['POST'])
+# --- LOGIN ---
+@app.route("/login", methods=['POST'])
 def login():
     try:
         datos = request.get_json()
+        # ApiClient envía 'usuario' y 'password'
         email = datos.get('usuario')
         password = datos.get('password')
 
         conn = get_db_connection()
         if not conn:
-            return jsonify({"success": False, "message": "Error de conexión a la base de datos"}), 500
+            return jsonify({"success": False, "message": "Error de conexión BD"}), 500
 
         cursor = conn.cursor()
-
-        # Asegúrate que la tabla y columnas existen: Usuarios(Email, Password)
-        query = "SELECT * FROM Usuarios WHERE Email = ? AND Password = ?"
-        cursor.execute(query, (email, password))
-
+        # Ajusta si tu tabla se llama diferente
+        cursor.execute("SELECT * FROM Usuarios WHERE Email = ? AND Password = ?", (email, password))
         usuario_encontrado = cursor.fetchone()
-        conn.close()
-
+        
         if usuario_encontrado:
+            # Convertimos la fila a diccionario
+            columns = [column[0] for column in cursor.description]
+            user_dict = dict(zip(columns, usuario_encontrado))
+            conn.close()
+            
             token = secrets.token_urlsafe(24)
             return jsonify({
-                "success": True,
+                "success": True, 
                 "message": "Login exitoso",
                 "token": token,
-                "datos": {"id": usuario_encontrado[0], "email": email}
+                "usuario": user_dict # Enviamos el objeto completo
             })
         else:
-            return jsonify({
-                "success": False,
-                "message": "Credenciales inválidas"
-            }), 401
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Error en el servidor: {str(e)}"
-        }), 500
+            conn.close()
+            return jsonify({"success": False, "message": "Credenciales inválidas"}), 401
 
-@app.route("/api/practicas", methods=['GET'])
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error servidor: {str(e)}"}), 500
+
+# --- PRÁCTICAS (GET y POST) ---
+@app.route("/practicas", methods=['GET'])
 def get_practicas():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-
+    if not conn: return jsonify([]), 500
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Practica")  # asegúrate que se llame así la tabla
-
+    cursor.execute("SELECT * FROM Practica")
     columns = [column[0] for column in cursor.description]
     results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
     conn.close()
     return jsonify(results)
 
-
-@app.route("/api/bitacora", methods=['GET'])
-
-
-@app.route('/api/practicas', methods=['POST'])
+@app.route('/practicas', methods=['POST'])
 def create_practica():
     try:
         datos = request.get_json()
-        required = ['idEstudiante', 'idCentroPractica', 'idTutor', 'idSupervisor', 'tipo', 'actividades']
+        # Validación básica
+        required = ['idEstudiante', 'idCentroPractica', 'idTutor', 'idSupervisor', 'tipo']
         if not all(k in datos for k in required):
             return jsonify({'success': False, 'message': 'Faltan campos obligatorios'}), 400
 
         fechaInicio = datos.get('fechaDeInicio')
         fechaTermino = datos.get('fechaDeTermino')
         evidencia = datos.get('evidenciaImg', '')
+        actividades = datos.get('actividades', '')
 
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Error de conexión a BD'}), 500
+        if not conn: return jsonify({'success': False, 'message': 'Error BD'}), 500
+        
         cursor = conn.cursor()
-
-        insert_q = """
+        query = """
         INSERT INTO Practica (idEstudiante, idCentroPractica, idTutor, idSupervisor, tipo, fechaDeInicio, fechaDeTermino, actividades, evidenciaImg)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        cursor.execute(insert_q, (
+        cursor.execute(query, (
             datos['idEstudiante'], datos['idCentroPractica'], datos['idTutor'], datos['idSupervisor'],
-            datos['tipo'], fechaInicio, fechaTermino, datos['actividades'], evidencia
+            datos['tipo'], fechaInicio, fechaTermino, actividades, evidencia
         ))
         conn.commit()
-        new_id = None
-        try:
-            new_id = cursor.lastrowid
-        except Exception:
-            new_id = None
         conn.close()
 
-        return jsonify({'success': True, 'message': 'Práctica creada', 'id': new_id})
+        return jsonify({'success': True, 'message': 'Práctica creada'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/api/bitacora', methods=['GET'])
-
+# --- BITÁCORA ---
+@app.route('/bitacora', methods=['GET'])
 def get_bitacora():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-
+    if not conn: return jsonify([]), 500
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Bitacora")  # tabla Bitacora en SistemaPracticas
-
+    cursor.execute("SELECT * FROM Bitacora")
     columns = [column[0] for column in cursor.description]
     results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
     conn.close()
     return jsonify(results)
 
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
-
-
-@app.route('/api/tipos', methods=['GET'])
+# --- TIPOS DE PRÁCTICA ---
+@app.route('/tipos', methods=['GET'])
 def get_tipos():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    cursor = conn.cursor()
-
+    if not conn: return jsonify([]), 500
     try:
+        cursor = conn.cursor()
         cursor.execute("SELECT idTipoPractica, nombre, horasRequeridas FROM TipoPractica")
         columns = [column[0] for column in cursor.description]
-        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
         conn.close()
-        return jsonify(rows)
+        return jsonify(results)
     except Exception:
-        # If table doesn't exist or other error, return empty list
         return jsonify([])
 
-
-@app.route('/api/tipos', methods=['POST'])
+@app.route('/tipos', methods=['POST'])
 def create_tipo():
     try:
         datos = request.get_json()
         nombre = datos.get('nombre')
         horas = int(datos.get('horasRequeridas', 0))
-        if not nombre or horas <= 0:
-            return jsonify({'success': False, 'message': 'nombre y horasRequeridas son requeridos'}), 400
-
+        
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Error de conexión a BD'}), 500
+        if not conn: return jsonify({'success': False}), 500
+        
         cursor = conn.cursor()
         cursor.execute("INSERT INTO TipoPractica (nombre, horasRequeridas) VALUES (?, ?)", (nombre, horas))
         conn.commit()
@@ -204,38 +183,34 @@ def create_tipo():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-
-@app.route('/api/sesiones', methods=['GET'])
+# --- SESIONES ---
+@app.route('/sesiones', methods=['GET'])
 def get_sesiones():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    cursor = conn.cursor()
+    if not conn: return jsonify([]), 500
     try:
-        cursor.execute("SELECT idSesion, idPractica, fecha, horaInicio, horaTermino, horas, actividad, estado FROM Sesion")
+        cursor = conn.cursor()
+        # Ajusta columnas según tu tabla real
+        cursor.execute("SELECT * FROM Sesion")
         columns = [column[0] for column in cursor.description]
-        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
         conn.close()
-        return jsonify(rows)
+        return jsonify(results)
     except Exception:
         return jsonify([])
 
-
-@app.route('/api/sesiones', methods=['POST'])
+@app.route('/sesiones', methods=['POST'])
 def create_sesion():
     try:
         datos = request.get_json()
-        required = ['fecha', 'horaInicio', 'horaTermino', 'horas']
-        if not all(k in datos for k in required):
-            return jsonify({'success': False, 'message': 'Faltan campos obligatorios para sesión'}), 400
-
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Error de conexión a BD'}), 500
+        if not conn: return jsonify({'success': False}), 500
+        
         cursor = conn.cursor()
+        # Asegúrate que los nombres de columnas coincidan con tu SQL Server
         cursor.execute(
             "INSERT INTO Sesion (idPractica, fecha, horaInicio, horaTermino, horas, actividad, estado) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (datos.get('idPractica'), datos['fecha'], datos['horaInicio'], datos['horaTermino'], datos['horas'], datos.get('actividad', ''), datos.get('estado', 'Programada'))
+            (datos.get('idPractica'), datos.get('fecha'), datos.get('horaInicio'), datos.get('horaTermino'), datos.get('horas'), datos.get('actividad', ''), datos.get('estado', 'Programada'))
         )
         conn.commit()
         conn.close()
@@ -243,39 +218,44 @@ def create_sesion():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-
-@app.route('/api/estudiantes', methods=['GET'])
+# --- ESTUDIANTES Y CENTROS ---
+@app.route('/estudiantes', methods=['GET'])
 def get_estudiantes():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    cursor = conn.cursor()
+    if not conn: return jsonify([]), 500
     try:
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM Estudiante")
         columns = [c[0] for c in cursor.description]
-        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
         conn.close()
-        return jsonify(rows)
+        return jsonify(results)
     except Exception:
         return jsonify([])
 
-
-@app.route('/api/centros', methods=['GET'])
+@app.route('/centros', methods=['GET'])
 def get_centros():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    cursor = conn.cursor()
+    if not conn: return jsonify([]), 500
     try:
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM CentroPractica")
         columns = [c[0] for c in cursor.description]
-        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
         conn.close()
-        return jsonify(rows)
+        return jsonify(results)
     except Exception:
         return jsonify([])
-    
-if __name__ == '__main__':
-    
-    app.run(debug=True, port= 5000)
 
+
+
+def abrir_navegador():
+    # Ajusta esta URL a tu proyecto local
+    url_login = "http://localhost/sistema-de-practica/frontend/login.php"
+    webbrowser.open_new(url_login)
+
+if __name__ == '__main__':
+    print("🚀 Servidor Backend iniciado en puerto 5000")
+    # Espera 1.5 seg y abre el login automáticamente
+    Timer(1.5, abrir_navegador).start()
+    app.run(debug=True, port=5000)
