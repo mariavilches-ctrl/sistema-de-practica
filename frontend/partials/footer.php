@@ -1,6 +1,4 @@
-<?php
-// partials/footer.php
-?>
-</div> <!-- .app -->
+</div> <script src="assets/JS/app.js"></script>
+
 </body>
 </html>
