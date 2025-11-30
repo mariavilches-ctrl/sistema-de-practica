@@ -90,6 +90,14 @@ class ApiClient {
     public function getPracticas() {
         return $this->makeRequest('/practicas');
     }
+
+    public function getSesiones() {
+        return $this->makeRequest('/sesiones');
+    }
+
+    public function getTipos() {
+        return $this->makeRequest('/tipos');
+    }
     
     public function createPractica($data) {
         return $this->makeRequest('/practicas', 'POST', $data);

@@ -3,26 +3,33 @@ $pageTitle  = "Calendario de Sesiones – Sistema de Prácticas UNACH";
 $activePage = "calendario";
 // session_start();
 
-$sesiones = [
-    [
-        'fecha'        => '2025-03-10',
-        'hora_inicio'  => '09:00',
-        'hora_termino' => '11:00',
-        'estudiante'   => 'Juan Pérez',
-        'tipo'         => 'Práctica Profesional',
-        'actividad'    => 'Inducción en el centro',
-        'estado'       => 'Programada',
-    ],
-    [
-        'fecha'        => '2025-03-12',
-        'hora_inicio'  => '14:00',
-        'hora_termino' => '17:00',
-        'estudiante'   => 'Ana Díaz',
-        'tipo'         => 'Práctica I',
-        'actividad'    => 'Observación de clases',
-        'estado'       => 'Realizada',
-    ],
-];
+// Intentar cargar sesiones desde la API y caer a datos de ejemplo si no hay backend
+require_once 'config/api_config.php';
+$api = new ApiClient();
+$sesiones = $api->getSesiones();
+
+if (isset($sesiones['error'])) {
+    $sesiones = [
+        [
+            'fecha'        => '2025-03-10',
+            'hora_inicio'  => '09:00',
+            'hora_termino' => '11:00',
+            'estudiante'   => 'Juan Pérez',
+            'tipo'         => 'Práctica Profesional',
+            'actividad'    => 'Inducción en el centro',
+            'estado'       => 'Programada',
+        ],
+        [
+            'fecha'        => '2025-03-12',
+            'hora_inicio'  => '14:00',
+            'hora_termino' => '17:00',
+            'estudiante'   => 'Ana Díaz',
+            'tipo'         => 'Práctica I',
+            'actividad'    => 'Observación de clases',
+            'estado'       => 'Realizada',
+        ],
+    ];
+}
 
 include 'partials/header.php';
 include 'partials/sidebar.php';
