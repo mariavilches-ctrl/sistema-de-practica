@@ -11,7 +11,7 @@ $practicas = $api->getPracticas();
 <!DOCTYPE html>
 <html>
 <head>
-    ../assets/styles.css
+    <link rel="stylesheet" href="../assets/styles.css">
 </head>
 <body>
 <?php include 'sidebar.php'; ?>
@@ -37,7 +37,22 @@ $practicas = $api->getPracticas();
                 <tbody>
                 <?php if (!empty($practicas)): ?>
                     <?php foreach ($practicas as $p): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($p['idEstudiante']) ?></td>
-                            <td><?= htmlspecialchars($p['tipo']) ?></td>
-                            <td><?= htmlspecialchars($p['idCentroPractica']) ?></td>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($p['idEstudiante']) ?></td>
+                                                    <td><?= htmlspecialchars($p['tipo']) ?></td>
+                                                    <td><?= htmlspecialchars($p['idCentroPractica']) ?></td>
+                                                    <td><?= htmlspecialchars($p['tutor']) ?></td>
+                                                    <td><?= htmlspecialchars($p['supervisor']) ?></td>
+                                                    <td><?= htmlspecialchars($p['estado']) ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr><td colspan="6">No hay prácticas asignadas</td></tr>
+                                        <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        </body>
+                        </html>
