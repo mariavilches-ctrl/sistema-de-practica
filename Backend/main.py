@@ -13,31 +13,28 @@ CORS(app)  # Habilitar CORS para todas las rutas
 
 def get_db_connection():
     try:
-        # Leer datos de conexión desde .env
         server = os.getenv('DB_SERVER')
         database = os.getenv('DB_NAME')
         username = os.getenv('DB_USER')
         password = os.getenv('DB_PASSWORD')
-
-        # Por si algo viene vacío
-        if not all([server, database, username, password]):
-            print("Faltan variables de entorno para la BD")
-            return None
-
+        
+        # Esta es la configuración EXACTA que funcionó en tu prueba
         connection_string = (
-            "DRIVER={ODBC Driver 17 for SQL Server};"
-            f"SERVER={server};"
-            f"DATABASE={database};"
-            f"UID={username};"
-            f"PWD={password}"
+            f'DRIVER={{ODBC Driver 17 for SQL Server}};'
+            f'SERVER={server};'
+            f'DATABASE={database};'
+            f'UID={username};'
+            f'PWD={password};'
+            f'Encrypt=yes;'
+            f'TrustServerCertificate=yes;'
         )
-
+        
         conn = pyodbc.connect(connection_string)
+        print(f"✅ Conexión establecida correctamente a {database}") # Mensaje de control
         return conn
     except Exception as e:
-        print("Error al conectar a la base de datos:", e)
+        print(f"❌ Error en get_db_connection: {e}")
         return None
-
 # ---------------- RUTAS ----------------
 
 @app.route("/")
