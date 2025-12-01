@@ -381,14 +381,73 @@ async function cargarRegistroSeguimiento() {
 }
 
 // ==========================================
-// 6. MÓDULO: ESTUDIANTES
+// 6. MÓDULO: BITÁCORA
+// ==========================================
+
+async function guardarBitacora() {
+    const datos = {
+        idPractica: document.getElementById('idPracticaBitacora').value,
+        idEstudiante: document.getElementById('idEstudianteBitacora').value,
+        habilidadesDesarrolladas: document.getElementById('habilidadesBitacora').value,
+        desafíos: document.getElementById('desafiosBitacora').value,
+        logros: document.getElementById('logrosBitacora').value
+    };
+
+    if (!datos.idPractica || !datos.idEstudiante || !datos.habilidadesDesarrolladas) {
+        showNotification('Completa los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        console.log('Enviando bitácora:', datos);
+        const res = await makeApiRequest('/bitacora', 'POST', datos);
+        showNotification(res.message || 'Bitácora guardada', 'success');
+        closeModal('modalBitacora');
+        window.location.reload();
+    } catch (error) {
+        console.error(error);
+        showNotification('Error al guardar la bitácora: ' + error.message, 'error');
+    }
+}
+
+// Abre el modal para NUEVA entrada (limpia el formulario)
+function abrirFormularioBitacora() {
+    document.getElementById('idBitacora').value = '';
+    document.getElementById('idPracticaBitacora').value = '';
+    document.getElementById('idEstudianteBitacora').value = '';
+    document.getElementById('habilidadesBitacora').value = '';
+    document.getElementById('desafiosBitacora').value = '';
+    document.getElementById('logrosBitacora').value = '';
+    openModal('modalBitacora');
+}
+
+// Abre el modal desde una FILA de la tabla (para ver/editar)
+function abrirFormularioBitacoraDesdeFila(fila) {
+    const id           = fila.dataset.id || '';
+    const idEstudiante = fila.dataset.idEstudiante || '';
+    const idPractica   = fila.dataset.idPractica || '';
+    const titulo       = fila.dataset.titulo || '';
+    const descripcion  = fila.dataset.descripcion || '';
+
+    document.getElementById('idBitacora').value = id;
+    document.getElementById('idPracticaBitacora').value = idPractica;
+    document.getElementById('idEstudianteBitacora').value = idEstudiante;
+    document.getElementById('habilidadesBitacora').value = descripcion || '';
+    document.getElementById('desafiosBitacora').value = '';
+    document.getElementById('logrosBitacora').value = titulo || '';
+
+    openModal('modalBitacora');
+}
+
+// ==========================================
+// 7. MÓDULO: ESTUDIANTES
 // ==========================================
 
 async function cargarEstudiantes() {
     try {
         const estudiantes = await makeApiRequest('/estudiantes');
         const tbody = document.querySelector('#tablaEstudiantes tbody');
-        if (!tbody) return; // Si no estamos en la página de estudiantes, salir
+        if (!tbody) return;
 
         tbody.innerHTML = '';
 
@@ -415,7 +474,7 @@ async function cargarEstudiantes() {
     } catch (error) {
         console.error(error);
         const tbody = document.querySelector('#tablaEstudiantes tbody');
-        if(tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
     }
 }
 
