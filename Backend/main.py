@@ -25,7 +25,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Instancias globales de patrones
+# --- INSTANCIAS GLOBALES (PATRONES) ---
 calendario_observable = CalendarioObservable()
 registro_seguimiento = RegistroSeguimiento()
 notificador = NotificadorSupervisor()
@@ -33,37 +33,24 @@ notificador = NotificadorSupervisor()
 calendario_observable.agregar_observador(registro_seguimiento)
 calendario_observable.agregar_observador(notificador)
 
-# ==========================================
-# CONEXIÓN A BASE DE DATOS
-# ==========================================
-
+# --- CONEXIÓN BD ---
 def get_db_connection():
     try:
-        server = os.getenv('DB_SERVER')
-        database = os.getenv('DB_NAME')
-        username = os.getenv('DB_USER')
-        password = os.getenv('DB_PASSWORD')
-        
         connection_string = (
             f'DRIVER={{ODBC Driver 17 for SQL Server}};'
-            f'SERVER={server};'
-            f'DATABASE={database};'
-            f'UID={username};'
-            f'PWD={password};'
+            f'SERVER={os.getenv("DB_SERVER")};'
+            f'DATABASE={os.getenv("DB_NAME")};'
+            f'UID={os.getenv("DB_USER")};'
+            f'PWD={os.getenv("DB_PASSWORD")};'
             f'Encrypt=yes;'
             f'TrustServerCertificate=yes;'
         )
-        
-        conn = pyodbc.connect(connection_string)
-        return conn
+        return pyodbc.connect(connection_string)
     except Exception as e:
-        print(f"❌ Error en get_db_connection: {e}")
+        print(f"❌ Error BD: {e}")
         return None
 
-# ==========================================
-# RUTAS GENERALES
-# ==========================================
-
+# --- RUTAS GENERALES ---
 @app.route("/")
 def index():
     return redirect("http://localhost/sistema-de-practica/frontend/login.php")
@@ -71,331 +58,59 @@ def index():
 @app.route("/test-db")
 def test_db():
     conn = get_db_connection()
-    if not conn:
-        return jsonify({"success": False, "message": "Fallo conexión BD"}), 500
+    if not conn: return jsonify({"success": False}), 500
     conn.close()
-    return jsonify({"success": True, "message": "Conexión BD OK"})
+    return jsonify({"success": True})
 
-# ==========================================
-# LOGIN
-# ==========================================
-
+# --- LOGIN ---
 @app.route("/login", methods=['POST'])
 def login():
     try:
         datos = request.get_json()
-        email = datos.get('usuario')
-        password = datos.get('password')
-
         conn = get_db_connection()
-        if not conn:
-            return jsonify({"success": False, "message": "Error conexión BD"}), 500
-
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM Usuarios WHERE Email = ? AND Password = ?", (email, password))
-        usuario_encontrado = cursor.fetchone()
+        if not conn: return jsonify({"message": "Error BD"}), 500
         
-        if usuario_encontrado:
-            columns = [column[0] for column in cursor.description]
-            user_dict = dict(zip(columns, usuario_encontrado))
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Usuarios WHERE Email = ? AND Password = ?", 
+                       (datos.get('usuario'), datos.get('password')))
+        user = cursor.fetchone()
+        
+        if user:
+            cols = [c[0] for c in cursor.description]
+            user_dict = dict(zip(cols, user))
             conn.close()
-            
-            token = secrets.token_urlsafe(24)
             return jsonify({
-                "success": True,
-                "message": "Login exitoso",
-                "token": token,
+                "success": True, 
+                "token": secrets.token_urlsafe(24), 
                 "usuario": user_dict
             })
-        else:
-            conn.close()
-            return jsonify({"success": False, "message": "Credenciales inválidas"}), 401
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Error servidor: {str(e)}"}), 500
-
-# ==========================================
-# FACTORY PATTERN: TIPOS DE PRÁCTICA
-# ==========================================
-
-@app.route('/tipos-practica', methods=['GET'])
-def get_tipos_practica():
-    """Obtiene todos los tipos de práctica usando Factory"""
-    try:
-        tipos = TipoPracticaFactory.obtener_todos_tipos()
-        return jsonify({
-            'success': True,
-            'data': tipos
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/tipos-practica/<tipo>', methods=['GET'])
-def get_tipo_practica(tipo):
-    """Obtiene un tipo específico de práctica"""
-    try:
-        tipo_obj = TipoPracticaFactory.crear_tipo(tipo)
-        return jsonify({
-            'success': True,
-            'data': tipo_obj.obtener_detalles()
-        })
-    except ValueError as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-# ==========================================
-# STRATEGY PATTERN: CALENDARIZACIÓN
-# ==========================================
-
-@app.route('/generar-calendario', methods=['POST'])
-def generar_calendario():
-    """Genera calendario usando Strategy pattern"""
-    try:
-        datos = request.get_json()
-        horas_totales = int(datos.get('horas_totales', 80))
-        fecha_inicio = datetime.fromisoformat(datos.get('fecha_inicio'))
-        sesiones_por_semana = int(datos.get('sesiones_por_semana', 2))
-        estrategia = datos.get('estrategia', 'uniforme').lower()
-        
-        # Seleccionar estrategia
-        if estrategia == 'intensiva':
-            calendario = CalendarizacionIntensiva()
-        elif estrategia == 'progresiva':
-            calendario = CalendarizacionProgresiva()
-        else:  # uniforme por defecto
-            calendario = CalendarizacionUniforme()
-        
-        sesiones = calendario.generar_calendario(horas_totales, fecha_inicio, sesiones_por_semana)
-        
-        # Notificar observadores
-        calendario_observable.notificar_observadores('calendario_generado', {
-            'estrategia': estrategia,
-            'horas': horas_totales,
-            'sesiones': len(sesiones)
-        })
-        
-        return jsonify({
-            'success': True,
-            'message': 'Calendario generado exitosamente',
-            'data': sesiones
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-# ==========================================
-# OBSERVER PATTERN: REGISTRO DE SEGUIMIENTO
-# ==========================================
-
-@app.route('/registro-seguimiento', methods=['GET'])
-def get_registro_seguimiento():
-    """Obtiene el registro de seguimiento de cambios"""
-    try:
-        registro = registro_seguimiento.obtener_registro()
-        return jsonify({
-            'success': True,
-            'data': registro
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/notificacion-sesion-completada', methods=['POST'])
-def notificar_sesion_completada():
-    """Notifica que una sesión fue completada"""
-    try:
-        datos = request.get_json()
-        calendario_observable.notificar_observadores('sesion_completada', datos)
-        return jsonify({'success': True, 'message': 'Notificación enviada'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-# ==========================================
-# COMPOSITE PATTERN: ESTRUCTURA DE PRÁCTICAS
-# ==========================================
-
-@app.route('/practica-estructura/<int:id_practica>', methods=['GET'])
-def get_estructura_practica(id_practica):
-    """Obtiene la estructura jerárquica de una práctica"""
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False}), 500
-        
-        # Obtener práctica
-        cursor = conn.cursor()
-        cursor.execute("SELECT idPractica, tipo, fechaDeInicio FROM Practica WHERE idPractica = ?", (id_practica,))
-        practica_row = cursor.fetchone()
-        
-        if not practica_row:
-            conn.close()
-            return jsonify({'success': False, 'message': 'Práctica no encontrada'}), 404
-        
-        # Crear estructura composite
-        practica = PracticaComposite(practica_row[0], practica_row[1], str(practica_row[2]))
-        
-        # Obtener sesiones
-        cursor.execute("SELECT idSesion, fecha FROM Sesion WHERE idPractica = ?", (id_practica,))
-        sesiones_rows = cursor.fetchall()
-        
-        for idx, sesion_row in enumerate(sesiones_rows, 1):
-            sesion = Sesion(sesion_row[0], str(sesion_row[1]), idx)
-            
-            # Obtener actividades de la sesión
-            cursor.execute(
-                """SELECT idActividad, nombre, horas, descripcion 
-                   FROM (SELECT ROW_NUMBER() OVER (PARTITION BY idSesion ORDER BY idSesion) as idActividad,
-                   nombre, horas, descripcion FROM Bitacora WHERE idPractica = ?) 
-                   WHERE idActividad IS NOT NULL""",
-                (id_practica,)
-            )
-            actividades_rows = cursor.fetchall()
-            
-            for act_row in actividades_rows:
-                actividad = Actividad(act_row[0], act_row[1], act_row[2], act_row[3])
-                sesion.agregar_actividad(actividad)
-            
-            practica.agregar_sesion(sesion)
         
         conn.close()
-        
-        return jsonify({
-            'success': True,
-            'data': practica.obtener_estructura()
-        })
+        return jsonify({"success": False, "message": "Credenciales inválidas"}), 401
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
 
-# ==========================================
-# CRUD BÁSICO: CENTROS DE PRÁCTICA
-# ==========================================
-
-@app.route('/centros', methods=['GET'])
-def get_centros():
-    conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM CentroPractica")
-        columns = [c[0] for c in cursor.description]
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        conn.close()
-        return jsonify(results)
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify([])
-
-@app.route('/centros/<int:id>', methods=['GET'])
-def get_centro(id):
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'error': 'BD error'}), 500
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM CentroPractica WHERE idCentroPractica = ?", (id,))
-        row = cursor.fetchone()
-        conn.close()
-        
-        if not row:
-            return jsonify({'error': 'Centro no encontrado'}), 404
-        
-        columns = [c[0] for c in cursor.description]
-        return jsonify(dict(zip(columns, row)))
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/centros', methods=['POST'])
-def create_centro():
-    try:
-        datos = request.get_json()
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Error BD'}), 500
-        
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO CentroPractica (rutEmpresa, nombre, descripcion, habilidadesEsperadas, direccion) VALUES (?, ?, ?, ?, ?)",
-            (datos.get('rutEmpresa'), datos.get('nombre'), datos.get('descripcion'), 
-             datos.get('habilidadesEsperadas'), datos.get('direccion'))
-        )
-        conn.commit()
-        conn.close()
-        
-        calendario_observable.notificar_observadores('centro_creado', datos)
-        
-        return jsonify({'success': True, 'message': 'Centro creado'}), 201
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/centros/<int:id>', methods=['PUT'])
-def update_centro(id):
-    try:
-        datos = request.get_json()
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False}), 500
-        
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE CentroPractica SET rutEmpresa=?, nombre=?, descripcion=?, habilidadesEsperadas=?, direccion=? WHERE idCentroPractica=?",
-            (datos.get('rutEmpresa'), datos.get('nombre'), datos.get('descripcion'),
-             datos.get('habilidadesEsperadas'), datos.get('direccion'), id)
-        )
-        conn.commit()
-        conn.close()
-        
-        calendario_observable.notificar_observadores('centro_actualizado', {'id': id})
-        
-        return jsonify({'success': True, 'message': 'Centro actualizado'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.route('/centros/<int:id>', methods=['DELETE'])
-def delete_centro(id):
-    try:
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False}), 500
-        
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM CentroPractica WHERE idCentroPractica = ?", (id,))
-        conn.commit()
-        conn.close()
-        
-        calendario_observable.notificar_observadores('centro_eliminado', {'id': id})
-        
-        return jsonify({'success': True, 'message': 'Centro eliminado'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-# ==========================================
-# CRUD: PRÁCTICAS
-# ==========================================
-
+# --- PRÁCTICAS (CRUD) ---
 @app.route("/practicas", methods=['GET'])
 def get_practicas():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM Practica")
-        columns = [column[0] for column in cursor.description]
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        conn.close()
-        return jsonify(results)
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify([])
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Practica")
+    columns = [c[0] for c in cursor.description]
+    res = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(res)
 
 @app.route('/practicas', methods=['POST'])
 def crear_practica():
     datos = request.json
     conn = get_db_connection()
-    if not conn:
-        return jsonify({'success': False, 'message': 'Error conexión BD'}), 500
+    if not conn: return jsonify({'success': False, 'message': 'Error BD'}), 500
 
     try:
         cursor = conn.cursor()
+        # USANDO TU STORED PROCEDURE OFICIAL
         cursor.execute("{CALL sp_InsertPractica (?, ?, ?, ?, ?, ?, ?, ?, ?)}", 
                        (datos.get('idEstudiante'), 
                         datos.get('idCentroPractica'), 
@@ -404,143 +119,157 @@ def crear_practica():
                         datos.get('tipo'), 
                         datos.get('fechaInicio'),
                         datos.get('fechaTermino'),
-                        datos.get('actividades'), 
+                        datos.get('actividades', 'Práctica asignada'), 
                         datos.get('evidenciaImg', '')))
         conn.commit()
         
+        # Patrón Observer: Notificar creación
         calendario_observable.notificar_observadores('practica_creada', datos)
         
-        return jsonify({'success': True, 'message': 'Práctica guardada'}), 201
+        return jsonify({'success': True, 'message': 'Práctica asignada correctamente'}), 201
     except Exception as e:
         print(f"Error SQL: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if conn:
-            conn.close()
+        if conn: conn.close()
 
 @app.route('/practicas/<int:id>', methods=['DELETE'])
 def delete_practica(id):
     try:
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False}), 500
-        
+        if not conn: return jsonify({'success': False}), 500
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM Practica WHERE idPractica = ?", (id,))
+        # Usamos el SP si existe, o delete directo
+        cursor.execute("{CALL sp_DeletePractica (?)}", (id,)) 
         conn.commit()
         conn.close()
-        
         calendario_observable.notificar_observadores('practica_eliminada', {'id': id})
-        
-        return jsonify({'success': True, 'message': 'Práctica eliminada'})
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-# ==========================================
-# CRUD: SESIONES
-# ==========================================
-
-@app.route('/sesiones', methods=['GET'])
-def get_sesiones():
+# --- CENTROS (CRUD) ---
+@app.route('/centros', methods=['GET'])
+def get_centros():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM Sesion")
-        columns = [c[0] for c in cursor.description]
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        conn.close()
-        return jsonify(results)
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify([])
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM CentroPractica")
+    columns = [c[0] for c in cursor.description]
+    res = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(res)
 
-@app.route('/sesiones', methods=['POST'])
-def create_sesion():
+@app.route('/centros', methods=['POST'])
+def create_centro():
     try:
-        datos = request.get_json()
+        d = request.get_json()
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False}), 500
+        if not conn: return jsonify({'success': False}), 500
+        
         cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO Sesion (idPractica, fecha, horaInicio, horaTermino, horas, actividad, estado) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (datos.get('idPractica'), datos.get('fecha'), datos.get('horaInicio'), datos.get('horaTermino'), 
-             datos.get('horas'), datos.get('actividad', ''), datos.get('estado', 'Programada'))
+        # USANDO TU STORED PROCEDURE OFICIAL
+        cursor.execute("{CALL sp_InsertCentroPractica (?, ?, ?, ?, ?)}",
+            (d.get('rutEmpresa'), d.get('nombre'), d.get('descripcion'), 
+             d.get('habilidadesEsperadas'), d.get('direccion'))
         )
         conn.commit()
         conn.close()
         
-        calendario_observable.notificar_observadores('sesion_creada', datos)
-        
-        return jsonify({'success': True, 'message': 'Sesión creada'}), 201
+        calendario_observable.notificar_observadores('centro_creado', d)
+        return jsonify({'success': True, 'message': 'Centro creado'}), 201
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/sesiones/<int:id>', methods=['DELETE'])
-def delete_sesion(id):
+@app.route('/centros/<int:id>', methods=['DELETE'])
+def delete_centro(id):
     try:
         conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False}), 500
-        
+        if not conn: return jsonify({'success': False}), 500
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM Sesion WHERE idSesion = ?", (id,))
+        cursor.execute("{CALL sp_DeleteCentroPractica (?)}", (id,))
         conn.commit()
         conn.close()
-        
-        calendario_observable.notificar_observadores('sesion_eliminada', {'id': id})
-        
-        return jsonify({'success': True, 'message': 'Sesión eliminada'})
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-# ==========================================
-# OTRAS RUTAS
-# ==========================================
-
-@app.route('/bitacora', methods=['GET'])
-def get_bitacora():
-    conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM Bitacora")
-        columns = [column[0] for column in cursor.description]
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        conn.close()
-        return jsonify(results)
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify([])
-
+# --- ESTUDIANTES (Helper para Selects) ---
 @app.route('/estudiantes', methods=['GET'])
 def get_estudiantes():
     conn = get_db_connection()
-    if not conn:
-        return jsonify([]), 500
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Estudiante")
+    cols = [c[0] for c in cursor.description]
+    res = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(res)
+
+# --- CALENDARIZACIÓN (Strategy) ---
+@app.route('/generar-calendario', methods=['POST'])
+def generar_calendario():
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM Estudiante")
-        columns = [c[0] for c in cursor.description]
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        conn.close()
-        return jsonify(results)
+        d = request.get_json()
+        horas = int(d.get('horas_totales', 80))
+        inicio = datetime.fromisoformat(d.get('fecha_inicio'))
+        estrategia = d.get('estrategia', 'uniforme')
+        
+        if estrategia == 'intensiva': cal = CalendarizacionIntensiva()
+        elif estrategia == 'progresiva': cal = CalendarizacionProgresiva()
+        else: cal = CalendarizacionUniforme()
+        
+        sesiones = cal.generar_calendario(horas, inicio, 2)
+        return jsonify({'success': True, 'data': sesiones})
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify([])
+        return jsonify({'success': False, 'message': str(e)}), 500
 
-# ==========================================
-# INICIO DEL SERVIDOR
-# ==========================================
+# --- SESIONES (Guardar Calendario) ---
+@app.route('/sesiones', methods=['POST'])
+def create_sesion():
+    try:
+        d = request.get_json()
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False}), 500
+        cursor = conn.cursor()
+        
+        # Insertamos en la nueva tabla Sesion
+        cursor.execute("INSERT INTO Sesion (idPractica, fecha, horaInicio, horaTermino, horas, actividad) VALUES (?, ?, ?, ?, ?, ?)",
+                       (d.get('idPractica'), d.get('fecha'), d.get('horaInicio'), d.get('horaTermino'), d.get('horas'), d.get('actividad')))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
-def abrir_navegador():
-    url = "http://localhost/sistema-de-practica/frontend/login.php"
-    webbrowser.open_new(url)
+# --- SEGUIMIENTO (Observer) ---
+@app.route('/registro-seguimiento', methods=['GET'])
+def get_seguimiento():
+    # Devuelve el log en memoria del patrón Observer
+    return jsonify({'success': True, 'data': registro_seguimiento.obtener_registro()})
 
-if __name__ == "__main__":
-    print("🚀 Iniciando Backend con Patrones de Diseño...")
-    Timer(1.5, abrir_navegador).start()
-    app.run(debug=True, port=5000)
+# --- FACTORY TIPOS ---
+@app.route('/tipos-practica', methods=['GET'])
+def get_tipos():
+    return jsonify({'success': True, 'data': TipoPracticaFactory.obtener_todos_tipos()})
+
+# --- BITÁCORA ---
+@app.route('/bitacora', methods=['GET'])
+def get_bitacora():
+    conn = get_db_connection()
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Bitacora")
+    cols = [c[0] for c in cursor.description]
+    res = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(res)
+
+# --- INICIO ---
+def abrir_nav():
+    webbrowser.open_new("http://localhost/sistema-de-practica/frontend/login.php")
+
+if __name__ == '__main__':
+    print("🚀 Backend con SPs iniciado...")
+    Timer(1.5, abrir_nav).start()
+    app.run(port=5000, debug=True)

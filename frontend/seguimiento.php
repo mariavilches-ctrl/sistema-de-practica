@@ -43,7 +43,7 @@ include 'partials/sidebar.php';
 </main>
 
 <?php include 'partials/footer.php'; ?>
-<script src="assets/JS/app.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         cargarRegistroSeguimiento();

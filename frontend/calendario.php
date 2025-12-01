@@ -206,7 +206,7 @@ include 'partials/sidebar.php';
 }
 </style>
 
-<script src="assets/JS/app.js"></script>
+<?php include 'partials/footer.php'; ?>
 <script>
 // Funciones de tabs
 function mostrarTab(tabId) {

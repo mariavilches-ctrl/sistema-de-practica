@@ -1,51 +1,55 @@
-// app.js - Sistema CRUD + Patrones de Diseño
+
+
+// app.js - Sistema CRUD Completo
 // Ubicación: frontend/assets/JS/app.js
 
 const API_BASE_URL = 'http://localhost:5000';
 
 // ==========================================
-// FUNCIONES GENERALES
+// 1. FUNCIONES GENERALES (Helpers)
 // ==========================================
 
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'block';
-        modal.classList.add('show');
+        setTimeout(() => modal.classList.add('show'), 10); // Animación suave
+    } else {
+        console.error('No se encontró el modal:', modalId);
     }
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'none';
         modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300); // Esperar animación
     }
 }
 
-document.addEventListener('click', function(event) {
+// Cerrar modal al hacer clic afuera
+window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
-        event.target.style.display = 'none';
+        event.target.classList.remove('show');
+        setTimeout(() => event.target.style.display = 'none', 300);
     }
-});
+};
 
 async function makeApiRequest(endpoint, method = 'GET', data = null) {
     try {
         const options = {
             method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' }
         };
 
-        if (data) {
-            options.body = JSON.stringify(data);
-        }
+        if (data) options.body = JSON.stringify(data);
 
         const response = await fetch(API_BASE_URL + endpoint, options);
         
-        if (!response.ok && response.status !== 201) {
-            throw new Error(`HTTP ${response.status}`);
+        // Si la respuesta no es OK, lanzamos error
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP ${response.status}`);
         }
 
         const result = await response.json();
@@ -57,210 +61,83 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
 }
 
 function showNotification(message, type = 'success') {
+    // Eliminar notificaciones previas
+    const existing = document.querySelector('.fixed-notification');
+    if (existing) existing.remove();
+
     const notification = document.createElement('div');
-    notification.className = `alert alert-${type}`;
+    notification.className = `alert alert-${type} fixed-notification`;
     notification.textContent = message;
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.zIndex = '9999';
-    notification.style.minWidth = '300px';
-    notification.style.padding = '15px';
-    notification.style.borderRadius = '5px';
+    
+    // Estilos para que flote
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: '10000',
+        minWidth: '300px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+    });
     
     document.body.appendChild(notification);
-    
     setTimeout(() => notification.remove(), 3000);
 }
 
 function escapeHtml(text) {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return text.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // ==========================================
-// FACTORY PATTERN: TIPOS DE PRÁCTICA
-// ==========================================
-
-async function cargarTiposPractica() {
-    try {
-        const tipos = await makeApiRequest('/tipos-practica');
-        renderizarTipos(tipos.data || []);
-    } catch (error) {
-        showNotification('Error al cargar tipos: ' + error.message, 'error');
-    }
-}
-
-function renderizarTipos(tipos) {
-    const tbody = document.querySelector('#tablaTipos tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    
-    if (!tipos || tipos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay tipos disponibles</td></tr>';
-        return;
-    }
-
-    tipos.forEach(tipo => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${escapeHtml(tipo.tipo)}</td>
-            <td>${tipo.horas}</td>
-            <td>${tipo.duracion_meses} meses</td>
-            <td>${escapeHtml(tipo.descripcion)}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-// ==========================================
-// STRATEGY PATTERN: CALENDARIZACIÓN
-// ==========================================
-
-async function generarCalendario() {
-    const estrategia = document.getElementById('estrategiaCalendario')?.value || 'uniforme';
-    const horas = document.getElementById('horasCalendario')?.value || 80;
-    const fecha = document.getElementById('fechaInicioCalendario')?.value;
-
-    if (!fecha) {
-        showNotification('Por favor selecciona una fecha', 'error');
-        return;
-    }
-
-    try {
-        const resultado = await makeApiRequest('/generar-calendario', 'POST', {
-            horas_totales: horas,
-            fecha_inicio: fecha + 'T00:00:00',
-            sesiones_por_semana: 2,
-            estrategia: estrategia
-        });
-
-        showNotification('Calendario generado: ' + resultado.data.length + ' sesiones', 'success');
-        renderizarCalendarioGenerado(resultado.data);
-    } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
-    }
-}
-
-function renderizarCalendarioGenerado(sesiones) {
-    const tbody = document.querySelector('#tablaCalendarioGenerado tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    
-    sesiones.slice(0, 10).forEach((sesion, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td>${sesion.fecha}</td>
-            <td>${sesion.horas} hrs</td>
-            <td><span class="badge badge-warning">${sesion.estado}</span></td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-// ==========================================
-// COMPOSITE PATTERN: ESTRUCTURA DE PRÁCTICAS
-// ==========================================
-
-async function cargarEstructuraPractica(idPractica) {
-    try {
-        const resultado = await makeApiRequest(`/practica-estructura/${idPractica}`);
-        mostrarEstructuraComposite(resultado.data);
-    } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
-    }
-}
-
-function mostrarEstructuraComposite(estructura) {
-    const div = document.getElementById('contenedorEstructura');
-    if (!div) return;
-
-    let html = `
-        <div class="estructura-practica">
-            <h3>Práctica: ${escapeHtml(estructura.tipo_practica)}</h3>
-            <p>Horas Totales: <strong>${estructura.horas_totales} hrs</strong></p>
-            <p>Número de Sesiones: <strong>${estructura.num_sesiones}</strong></p>
-            <div class="sesiones-container">
-    `;
-
-    if (estructura.sesiones && estructura.sesiones.length > 0) {
-        estructura.sesiones.forEach(sesion => {
-            html += `
-                <div class="sesion-item" style="border-left: 4px solid #2563eb; padding-left: 15px; margin: 10px 0;">
-                    <h4>Sesión #${sesion.num_sesion} - ${sesion.fecha}</h4>
-                    <p>Horas: <strong>${sesion.horas_totales}</strong></p>
-            `;
-
-            if (sesion.actividades && sesion.actividades.length > 0) {
-                html += '<div style="margin-left: 20px;"><strong>Actividades:</strong><ul>';
-                sesion.actividades.forEach(act => {
-                    html += `<li>${escapeHtml(act.nombre)} (${act.horas} hrs)</li>`;
-                });
-                html += '</ul></div>';
-            }
-            html += '</div>';
-        });
-    }
-
-    html += '</div></div>';
-    div.innerHTML = html;
-}
-
-// ==========================================
-// CRUD: CENTROS DE PRÁCTICA
+// 2. MÓDULO: CENTROS DE PRÁCTICA
 // ==========================================
 
 async function cargarCentros() {
     try {
         const centros = await makeApiRequest('/centros');
-        renderizarCentros(centros);
+        const tbody = document.querySelector('#tablaCentros tbody');
+        if (!tbody) return; // Si no estamos en la página de centros, salir
+
+        tbody.innerHTML = '';
+
+        if (!centros || centros.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay centros registrados</td></tr>';
+            return;
+        }
+
+        centros.forEach(centro => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${escapeHtml(centro.idCentroPractica)}</td>
+                <td>${escapeHtml(centro.rutEmpresa)}</td>
+                <td>${escapeHtml(centro.nombre)}</td>
+                <td>${escapeHtml(centro.descripcion || '-')}</td>
+                <td>${escapeHtml(centro.direccion)}</td>
+                <td>
+                    <button class="btn-delete" style="padding: 5px 10px;" onclick="eliminarCentro(${centro.idCentroPractica})">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     } catch (error) {
-        showNotification('Error al cargar centros: ' + error.message, 'error');
+        console.error(error);
+        const tbody = document.querySelector('#tablaCentros tbody');
+        if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
     }
-}
-
-function renderizarCentros(centros) {
-    const tbody = document.querySelector('#tablaCentros tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    if (!centros || centros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay centros registrados</td></tr>';
-        return;
-    }
-
-    centros.forEach(centro => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${escapeHtml(centro.idCentroPractica)}</td>
-            <td>${escapeHtml(centro.rutEmpresa)}</td>
-            <td>${escapeHtml(centro.nombre)}</td>
-            <td>${escapeHtml(centro.descripcion || '-')}</td>
-            <td>${escapeHtml(centro.direccion)}</td>
-            <td>
-                <button class="btn-edit" onclick="editarCentro(${centro.idCentroPractica})">Editar</button>
-                <button class="btn-delete" onclick="eliminarCentro(${centro.idCentroPractica})">Eliminar</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
 }
 
 function abrirFormularioCentro() {
-    document.getElementById('formCentro').reset();
-    document.getElementById('idCentro').value = '';
-    document.querySelector('#modalCentro h2').textContent = 'Agregar Centro de Práctica';
+    const form = document.getElementById('formCentro');
+    if (form) form.reset();
     openModal('modalCentro');
 }
 
 async function guardarCentro() {
-    const id = document.getElementById('idCentro').value;
     const datos = {
         rutEmpresa: document.getElementById('rutEmpresa').value,
         nombre: document.getElementById('nombreCentro').value,
@@ -270,46 +147,25 @@ async function guardarCentro() {
     };
 
     if (!datos.rutEmpresa || !datos.nombre || !datos.direccion) {
-        showNotification('Por favor completa los campos obligatorios', 'error');
+        showNotification('Complete los campos obligatorios', 'error');
         return;
     }
 
     try {
         const resultado = await makeApiRequest('/centros', 'POST', datos);
-        showNotification(resultado.message || 'Centro guardado exitosamente', 'success');
+        showNotification(resultado.message || 'Centro guardado', 'success');
         closeModal('modalCentro');
         cargarCentros();
     } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
-    }
-}
-
-async function editarCentro(id) {
-    try {
-        const centro = await makeApiRequest(`/centros/${id}`);
-        
-        document.getElementById('idCentro').value = centro.idCentroPractica;
-        document.getElementById('rutEmpresa').value = centro.rutEmpresa;
-        document.getElementById('nombreCentro').value = centro.nombre;
-        document.getElementById('descripcionCentro').value = centro.descripcion || '';
-        document.getElementById('habilidadesCentro').value = centro.habilidadesEsperadas || '';
-        document.getElementById('direccionCentro').value = centro.direccion;
-        
-        document.querySelector('#modalCentro h2').textContent = 'Editar Centro de Práctica';
-        openModal('modalCentro');
-    } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
+        showNotification('Error al guardar: ' + error.message, 'error');
     }
 }
 
 async function eliminarCentro(id) {
-    if (!confirm('¿Estás seguro de que quieres eliminar este centro?')) {
-        return;
-    }
-
+    if (!confirm('¿Seguro que deseas eliminar este centro?')) return;
     try {
-        const resultado = await makeApiRequest(`/centros/${id}`, 'DELETE');
-        showNotification(resultado.message || 'Centro eliminado', 'success');
+        await makeApiRequest(`/centros/${id}`, 'DELETE');
+        showNotification('Centro eliminado', 'success');
         cargarCentros();
     } catch (error) {
         showNotification('Error: ' + error.message, 'error');
@@ -317,137 +173,181 @@ async function eliminarCentro(id) {
 }
 
 // ==========================================
-// CRUD: PRÁCTICAS
+// 3. MÓDULO: PRÁCTICAS
 // ==========================================
 
 async function cargarPracticas() {
     try {
         const practicas = await makeApiRequest('/practicas');
-        renderizarPracticas(practicas);
+        const tbody = document.querySelector('#tablaPracticas tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (!practicas || practicas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay prácticas registradas</td></tr>';
+            return;
+        }
+
+        practicas.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>#${p.idPractica}</td>
+                <td>${p.idEstudiante}</td>
+                <td><span class="badge">${escapeHtml(p.tipo)}</span></td>
+                <td>${p.idCentroPractica}</td>
+                <td>${p.idTutor}</td>
+                <td>${p.fechaDeInicio || '?'} / ${p.fechaDeTermino || '?'}</td>
+                <td>
+                    <button class="btn-delete" style="padding: 5px 10px;" onclick="eliminarPractica(${p.idPractica})">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
+        console.error(error);
     }
 }
 
-function renderizarPracticas(practicas) {
-    const tbody = document.querySelector('#tablaPracticas tbody');
-    if (!tbody) return;
+async function abrirModalPractica() {
+    openModal('modalPractica');
+    
+    // Llenar Estudiantes
+    try {
+        const estudiantes = await makeApiRequest('/estudiantes');
+        const select = document.getElementById('selectEstudiante');
+        if(select) {
+            select.innerHTML = '<option value="">Seleccione...</option>';
+            estudiantes.forEach(e => {
+                select.innerHTML += `<option value="${e.idEstudiante}">${e.nombreCompleto || e.rut}</option>`;
+            });
+        }
+    } catch (e) { console.error("Error cargando estudiantes", e); }
 
-    tbody.innerHTML = '';
+    // Llenar Centros
+    try {
+        const centros = await makeApiRequest('/centros');
+        const select = document.getElementById('selectCentro');
+        if(select) {
+            select.innerHTML = '<option value="">Seleccione...</option>';
+            centros.forEach(c => {
+                select.innerHTML += `<option value="${c.idCentroPractica}">${c.nombre}</option>`;
+            });
+        }
+    } catch (e) { console.error("Error cargando centros", e); }
+}
 
-    if (!practicas || practicas.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay prácticas</td></tr>';
+async function guardarPractica() {
+    const datos = {
+        idEstudiante: document.getElementById('selectEstudiante').value,
+        idCentroPractica: document.getElementById('selectCentro').value,
+        tipo: document.getElementById('selectTipo').value,
+        idTutor: document.getElementById('idTutor').value,
+        idSupervisor: document.getElementById('idSupervisor').value,
+        fechaInicio: document.getElementById('fechaInicio').value,
+        fechaTermino: document.getElementById('fechaTermino').value,
+        actividades: 'Asignada desde Web',
+        evidenciaImg: ''
+    };
+
+    if(!datos.idEstudiante || !datos.idCentroPractica || !datos.fechaInicio) {
+        showNotification('Faltan datos obligatorios', 'error');
         return;
     }
 
-    practicas.forEach(p => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${p.idPractica}</td>
-            <td>${p.idEstudiante}</td>
-            <td>${escapeHtml(p.tipo)}</td>
-            <td>${p.idCentroPractica}</td>
-            <td>${p.idTutor}</td>
-            <td>${p.fechaDeInicio || '-'}</td>
-            <td>
-                <button class="btn-delete" onclick="eliminarPractica(${p.idPractica})">Eliminar</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function eliminarPractica(id) {
-    if (!confirm('¿Estás seguro?')) return;
-    
     try {
-        await makeApiRequest(`/practicas/${id}`, 'DELETE');
-        showNotification('Práctica eliminada', 'success');
+        const res = await makeApiRequest('/practicas', 'POST', datos);
+        showNotification(res.message, 'success');
+        closeModal('modalPractica');
         cargarPracticas();
     } catch (error) {
         showNotification('Error: ' + error.message, 'error');
     }
 }
 
-// ==========================================
-// CRUD: SESIONES
-// ==========================================
-
-async function cargarSesiones() {
+async function eliminarPractica(id) {
+    if(!confirm('¿Eliminar práctica?')) return;
     try {
-        const sesiones = await makeApiRequest('/sesiones');
-        renderizarSesiones(sesiones);
-    } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
-    }
-}
-
-function renderizarSesiones(sesiones) {
-    const tbody = document.querySelector('#tablaSesiones tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    if (!sesiones || sesiones.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay sesiones</td></tr>';
-        return;
-    }
-
-    sesiones.forEach(s => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${s.fecha}</td>
-            <td>${s.horaInicio} - ${s.horaTermino}</td>
-            <td>${s.idPractica}</td>
-            <td>${escapeHtml(s.actividad || '-')}</td>
-            <td>${s.horas}</td>
-            <td><span class="badge">${s.estado}</span></td>
-            <td>
-                <button class="btn-delete" onclick="eliminarSesion(${s.idSesion})">Eliminar</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function eliminarSesion(id) {
-    if (!confirm('¿Estás seguro?')) return;
-    
-    try {
-        await makeApiRequest(`/sesiones/${id}`, 'DELETE');
-        showNotification('Sesión eliminada', 'success');
-        cargarSesiones();
-    } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
+        await makeApiRequest(`/practicas/${id}`, 'DELETE');
+        showNotification('Práctica eliminada', 'success');
+        cargarPracticas();
+    } catch (e) {
+        showNotification(e.message, 'error');
     }
 }
 
 // ==========================================
-// OBSERVER PATTERN: REGISTRO DE SEGUIMIENTO
+// 4. MÓDULO: CALENDARIZACIÓN Y TIPOS
+// ==========================================
+
+async function cargarTiposPractica() {
+    try {
+        const res = await makeApiRequest('/tipos-practica');
+        const tbody = document.querySelector('#tablaTipos tbody');
+        if(!tbody) return;
+
+        tbody.innerHTML = '';
+        const tipos = res.data || [];
+        tipos.forEach(t => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${t.tipo}</td><td>${t.horas}</td><td>${t.duracion_meses} meses</td><td>${t.descripcion}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error(e); }
+}
+
+async function generarCalendario() {
+    const estrategia = document.getElementById('estrategiaCalendario').value;
+    const horas = document.getElementById('horasCalendario').value;
+    const fecha = document.getElementById('fechaInicioCalendario').value;
+
+    if(!fecha) { showNotification('Selecciona una fecha', 'error'); return; }
+
+    try {
+        const res = await makeApiRequest('/generar-calendario', 'POST', {
+            horas_totales: horas,
+            fecha_inicio: fecha,
+            estrategia: estrategia
+        });
+        
+        const tbody = document.querySelector('#tablaCalendarioGenerado tbody');
+        tbody.innerHTML = '';
+        res.data.slice(0, 15).forEach((s, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i+1}</td><td>${s.fecha}</td><td>${s.horas} hrs</td><td>${s.estado}</td>`;
+            tbody.appendChild(tr);
+        });
+        showNotification('Calendario generado', 'success');
+    } catch (e) { showNotification(e.message, 'error'); }
+}
+
+// ==========================================
+// 5. MÓDULO: SEGUIMIENTO (OBSERVER)
 // ==========================================
 
 async function cargarRegistroSeguimiento() {
     try {
-        const resultado = await makeApiRequest('/registro-seguimiento');
-        renderizarRegistro(resultado.data || []);
-    } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
-    }
-}
+        const res = await makeApiRequest('/registro-seguimiento');
+        const tbody = document.querySelector('#tablaRegistro tbody');
+        if(!tbody) return;
+        
+        tbody.innerHTML = '';
+        const logs = res.data || [];
+        
+        if(logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No hay eventos recientes</td></tr>';
+            return;
+        }
 
-function renderizarRegistro(registro) {
-    const tbody = document.querySelector('#tablaRegistro tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    
-    registro.slice(0, 20).forEach(evento => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${evento.timestamp}</td>
-            <td><strong>${escapeHtml(evento.evento)}</strong></td>
-            <td>${JSON.stringify(evento.datos).substring(0, 50)}...</td>
-        `;
-        tbody.appendChild(tr);
-    });
+        logs.reverse().forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(log.timestamp).toLocaleString()}</td>
+                <td><strong>${log.evento}</strong></td>
+                <td><small>${JSON.stringify(log.datos)}</small></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error(e); }
 }

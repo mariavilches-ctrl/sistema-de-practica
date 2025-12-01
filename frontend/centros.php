@@ -45,7 +45,6 @@ include 'partials/sidebar.php';
     </section>
 </main>
 
-<!-- MODAL -->
 <div id="modalCentro" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal('modalCentro')">&times;</span>
@@ -56,22 +55,22 @@ include 'partials/sidebar.php';
             
             <div class="form-group">
                 <label>RUT Empresa *</label>
-                <input type="text" id="rutEmpresa" required>
+                <input type="text" id="rutEmpresa" required placeholder="Ej: 77.123.456-K">
             </div>
 
             <div class="form-group">
                 <label>Nombre *</label>
-                <input type="text" id="nombreCentro" required>
+                <input type="text" id="nombreCentro" required placeholder="Nombre de la empresa">
             </div>
 
             <div class="form-group">
                 <label>Descripción</label>
-                <textarea id="descripcionCentro"></textarea>
+                <textarea id="descripcionCentro" rows="3"></textarea>
             </div>
 
             <div class="form-group">
                 <label>Habilidades Esperadas</label>
-                <textarea id="habilidadesCentro"></textarea>
+                <textarea id="habilidadesCentro" rows="2"></textarea>
             </div>
 
             <div class="form-group">
@@ -85,9 +84,10 @@ include 'partials/sidebar.php';
 </div>
 
 <?php include 'partials/footer.php'; ?>
-<script src="assets/JS/app.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Llama a la función de app.js para llenar la tabla
         cargarCentros();
     });
 </script>
