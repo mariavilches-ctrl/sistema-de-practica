@@ -72,9 +72,7 @@ class TipoPracticaFactory:
             tipos.append(obj.obtener_detalles())
         return tipos
 
-# ==========================================
-# PATTERN 2: STRATEGY - Algoritmos de Calendarización
-# ==========================================
+
 
 class EstrategiaCalendarizacion(ABC):
     """Clase abstracta para estrategias de calendarización"""
@@ -146,9 +144,7 @@ class CalendarizacionProgresiva(EstrategiaCalendarizacion):
                 })
         return sesiones
 
-# ==========================================
-# PATTERN 3: OBSERVER - Seguimiento de Cambios
-# ==========================================
+
 
 class Observador(ABC):
     """Interfaz para observadores"""
@@ -201,9 +197,7 @@ class NotificadorSupervisor(Observador):
         if evento in ['sesion_completada', 'horas_alcanzadas', 'practica_finalizada']:
             print(f"📢 Notificación al Supervisor: {evento} - {datos}")
 
-# ==========================================
-# PATTERN 4: COMPOSITE - Estructura Jerárquica
-# ==========================================
+
 
 class ComponenteActividad(ABC):
     """Componente abstracto para la estructura compuesta"""
