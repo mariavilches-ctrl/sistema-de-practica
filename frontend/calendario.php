@@ -118,6 +118,7 @@ include 'partials/sidebar.php';
         <h2>Agregar Sesión</h2>
         
         <form id="formSesion" onsubmit="event.preventDefault(); guardarSesion();">
+            <input type="hidden" id="idSesion">
             <div class="form-group">
                 <label>ID Práctica *</label>
                 <input type="number" id="idPracticaSesion" required>
@@ -237,9 +238,11 @@ function mostrarTab(tabId) {
 // Cargar sesiones al abrir pestaña
 document.addEventListener('DOMContentLoaded', function() {
     cargarSesiones();
-    
+
     // Set fecha de hoy como default
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fechaInicioCalendario').value = hoy;
 });
 </script>
+
+<script src="assets/CSS/JS/app.js"></script>

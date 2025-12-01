@@ -535,3 +535,118 @@ async function eliminarEstudiante(id) {
         showNotification('Error: ' + error.message, 'error');
     }
 }
+
+// ==========================================
+// 8. MÓDULO: SESIONES
+// ==========================================
+
+async function cargarSesiones() {
+    try {
+        const sesiones = await makeApiRequest('/sesiones');
+        const tbody = document.querySelector('#tablaSesiones tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (!sesiones || sesiones.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay sesiones programadas</td></tr>';
+            return;
+        }
+
+        sesiones.forEach(sesion => {
+            const horario = `${sesion.horaInicio || ''} - ${sesion.horaTermino || ''}`;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sesion.fecha}</td>
+                <td>${horario}</td>
+                <td>${sesion.idPractica}</td>
+                <td>${escapeHtml(sesion.actividad || '-')}</td>
+                <td>${sesion.horas}</td>
+                <td><span class="badge">${sesion.estado}</span></td>
+                <td>
+                    <button class="btn-edit" onclick="editarSesion(${sesion.idSesion})">Editar</button>
+                    <button class="btn-delete" onclick="eliminarSesion(${sesion.idSesion})">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error(error);
+        const tbody = document.querySelector('#tablaSesiones tbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
+    }
+}
+
+function abrirFormularioSesion() {
+    document.getElementById('idSesion').value = '';
+    document.getElementById('formSesion').reset();
+    openModal('modalSesion');
+}
+
+async function editarSesion(id) {
+    try {
+        const sesiones = await makeApiRequest('/sesiones');
+        const sesion = sesiones.find(s => s.idSesion == id);
+        if (!sesion) {
+            showNotification('Sesión no encontrada', 'error');
+            return;
+        }
+
+        document.getElementById('idSesion').value = sesion.idSesion;
+        document.getElementById('idPracticaSesion').value = sesion.idPractica;
+        document.getElementById('fechaSesion').value = sesion.fecha;
+        document.getElementById('horaInicioSesion').value = sesion.horaInicio;
+        document.getElementById('horaTerminoSesion').value = sesion.horaTermino;
+        document.getElementById('horasSesion').value = sesion.horas;
+        document.getElementById('actividadSesion').value = sesion.actividad || '';
+        document.getElementById('estadoSesion').value = sesion.estado;
+
+        openModal('modalSesion');
+    } catch (error) {
+        showNotification('Error al cargar sesión: ' + error.message, 'error');
+    }
+}
+
+async function guardarSesion() {
+    const idSesion = document.getElementById('idSesion').value;
+    const datos = {
+        idPractica: document.getElementById('idPracticaSesion').value,
+        fecha: document.getElementById('fechaSesion').value,
+        horaInicio: document.getElementById('horaInicioSesion').value,
+        horaTermino: document.getElementById('horaTerminoSesion').value,
+        horas: document.getElementById('horasSesion').value,
+        actividad: document.getElementById('actividadSesion').value,
+        estado: document.getElementById('estadoSesion').value
+    };
+
+    if (!datos.idPractica || !datos.fecha || !datos.horaInicio || !datos.horaTermino || !datos.horas) {
+        showNotification('Complete los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        if (idSesion) {
+            // Actualizar
+            await makeApiRequest(`/sesiones/${idSesion}`, 'PUT', datos);
+            showNotification('Sesión actualizada', 'success');
+        } else {
+            // Crear
+            await makeApiRequest('/sesiones', 'POST', datos);
+            showNotification('Sesión creada', 'success');
+        }
+        closeModal('modalSesion');
+        cargarSesiones();
+    } catch (error) {
+        showNotification('Error al guardar: ' + error.message, 'error');
+    }
+}
+
+async function eliminarSesion(id) {
+    if (!confirm('¿Eliminar esta sesión?')) return;
+    try {
+        await makeApiRequest(`/sesiones/${id}`, 'DELETE');
+        showNotification('Sesión eliminada', 'success');
+        cargarSesiones();
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
+}
