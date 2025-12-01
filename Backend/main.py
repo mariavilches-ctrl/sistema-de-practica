@@ -53,7 +53,7 @@ def get_db_connection():
 # --- RUTAS GENERALES ---
 @app.route("/")
 def index():
-    return redirect("http://localhost/sistema-de-practica/frontend/login.php")
+    return redirect("http://localhost/sistema/login.php")
 
 @app.route("/test-db")
 def test_db():
@@ -194,7 +194,19 @@ def delete_centro(id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-# --- ESTUDIANTES (Helper para Selects) ---
+# --- CARRERAS (Helper para Selects) ---
+@app.route('/carreras', methods=['GET'])
+def get_carreras():
+    conn = get_db_connection()
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Carrera")
+    cols = [c[0] for c in cursor.description]
+    res = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(res)
+
+# --- ESTUDIANTES (CRUD) ---
 @app.route('/estudiantes', methods=['GET'])
 def get_estudiantes():
     conn = get_db_connection()
@@ -205,6 +217,27 @@ def get_estudiantes():
     res = [dict(zip(cols, row)) for row in cursor.fetchall()]
     conn.close()
     return jsonify(res)
+
+@app.route('/estudiantes', methods=['POST'])
+def create_estudiante():
+    try:
+        d = request.get_json()
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False, 'message': 'Error BD'}), 500
+
+        cursor = conn.cursor()
+        # USANDO TU STORED PROCEDURE OFICIAL
+        cursor.execute("{CALL sp_InsertEstudiante (?, ?, ?, ?, ?, ?, ?)}",
+            (d.get('rut'), d.get('nombreCompleto'), d.get('anoLectivo'),
+             d.get('domicilio'), d.get('telefono'), d.get('correoInstitucional'), d.get('idCarrera'))
+        )
+        conn.commit()
+        conn.close()
+
+        calendario_observable.notificar_observadores('estudiante_creado', d)
+        return jsonify({'success': True, 'message': 'Estudiante agregado correctamente'}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # --- CALENDARIZACIÓN (Strategy) ---
 @app.route('/generar-calendario', methods=['POST'])
