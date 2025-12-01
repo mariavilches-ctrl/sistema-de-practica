@@ -210,3 +210,33 @@ FOREIGN KEY (idCentroPractica) REFERENCES CentroPractica(idCentroPractica);
 ALTER TABLE CompetenciaCentro
 ADD CONSTRAINT FK_CompCentro_Evaluacion
 FOREIGN KEY (idEvaluacion) REFERENCES EvaluacionArea(idEvaluacion);
+
+
+CREATE TABLE Sesion (
+    idSesion INT IDENTITY(1,1) PRIMARY KEY,
+    idPractica INT NOT NULL,
+    fecha DATE NOT NULL,
+    horaInicio TIME(0),
+    horaTermino TIME(0),
+    horas INT,
+    actividad VARCHAR(500),
+    estado VARCHAR(50) DEFAULT 'Programada',
+    CONSTRAINT FK_Sesion_Practica FOREIGN KEY (idPractica) REFERENCES Practica(idPractica) ON DELETE CASCADE
+);
+GO
+
+-- SP para insertar Sesion (usado por el Backend)
+CREATE PROCEDURE sp_InsertSesion
+    @idPractica INT,
+    @fecha DATE,
+    @horaInicio TIME(0),
+    @horaTermino TIME(0),
+    @horas INT,
+    @actividad VARCHAR(500),
+    @estado VARCHAR(50)
+AS
+BEGIN
+    INSERT INTO Sesion (idPractica, fecha, horaInicio, horaTermino, horas, actividad, estado)
+    VALUES (@idPractica, @fecha, @horaInicio, @horaTermino, @horas, @actividad, @estado);
+END;
+GO
