@@ -263,6 +263,34 @@ async function guardarPractica() {
         showNotification('Error: ' + error.message, 'error');
     }
 }
+function renderizarPracticas(practicas) {
+    const tbody = document.querySelector('#tablaPracticas tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!practicas || practicas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay prácticas registradas</td></tr>';
+        return;
+    }
+
+    practicas.forEach(p => {
+        const tr = document.createElement('tr');
+        // CAMBIO AQUÍ: Usamos las propiedades con nombre (NombreEstudiante, NombreCentro...)
+        tr.innerHTML = `
+            <td>#${p.idPractica}</td>
+            <td>${escapeHtml(p.NombreEstudiante)}</td>
+            <td><span class="badge badge-warning">${escapeHtml(p.tipo)}</span></td>
+            <td>${escapeHtml(p.NombreCentro)}</td>
+            <td>${escapeHtml(p.NombreTutor)}</td>
+            <td>${p.fechaDeInicio || '?'} / ${p.fechaDeTermino || '?'}</td>
+            <td>
+                <button class="btn-delete" style="padding: 5px 10px;" onclick="eliminarPractica(${p.idPractica})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
 async function eliminarPractica(id) {
     if(!confirm('¿Eliminar práctica?')) return;
@@ -331,10 +359,10 @@ async function cargarRegistroSeguimiento() {
         const res = await makeApiRequest('/registro-seguimiento');
         const tbody = document.querySelector('#tablaRegistro tbody');
         if(!tbody) return;
-        
+
         tbody.innerHTML = '';
         const logs = res.data || [];
-        
+
         if(logs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No hay eventos recientes</td></tr>';
             return;
@@ -353,14 +381,15 @@ async function cargarRegistroSeguimiento() {
 }
 
 // ==========================================
-// MÓDULO: BITÁCORA
+// 6. MÓDULO: BITÁCORA
 // ==========================================
+
 async function guardarBitacora() {
     const datos = {
         idPractica: document.getElementById('idPracticaBitacora').value,
         idEstudiante: document.getElementById('idEstudianteBitacora').value,
         habilidadesDesarrolladas: document.getElementById('habilidadesBitacora').value,
-        desafios: document.getElementById('desafiosBitacora').value,
+        desafíos: document.getElementById('desafiosBitacora').value,
         logros: document.getElementById('logrosBitacora').value
     };
 
@@ -374,7 +403,6 @@ async function guardarBitacora() {
         const res = await makeApiRequest('/bitacora', 'POST', datos);
         showNotification(res.message || 'Bitácora guardada', 'success');
         closeModal('modalBitacora');
-        // Recargar para ver el nuevo registro en la tabla
         window.location.reload();
     } catch (error) {
         console.error(error);
@@ -384,40 +412,126 @@ async function guardarBitacora() {
 
 // Abre el modal para NUEVA entrada (limpia el formulario)
 function abrirFormularioBitacora() {
-    // Limpiar campos
     document.getElementById('idBitacora').value = '';
     document.getElementById('idPracticaBitacora').value = '';
     document.getElementById('idEstudianteBitacora').value = '';
     document.getElementById('habilidadesBitacora').value = '';
     document.getElementById('desafiosBitacora').value = '';
     document.getElementById('logrosBitacora').value = '';
-
-    // Abrir modal usando el helper que ya tienes
     openModal('modalBitacora');
 }
 
 // Abre el modal desde una FILA de la tabla (para ver/editar)
 function abrirFormularioBitacoraDesdeFila(fila) {
-    // Tomar datos desde los data-* de la fila
     const id           = fila.dataset.id || '';
     const idEstudiante = fila.dataset.idEstudiante || '';
     const idPractica   = fila.dataset.idPractica || '';
     const titulo       = fila.dataset.titulo || '';
     const descripcion  = fila.dataset.descripcion || '';
 
-    // Rellenar campos básicos
     document.getElementById('idBitacora').value = id;
     document.getElementById('idPracticaBitacora').value = idPractica;
     document.getElementById('idEstudianteBitacora').value = idEstudiante;
-
-    // Como en la tabla no tienes habilidades/desafíos/logros,
-    // por ahora usamos lo que hay:
     document.getElementById('habilidadesBitacora').value = descripcion || '';
     document.getElementById('desafiosBitacora').value = '';
     document.getElementById('logrosBitacora').value = titulo || '';
 
-    // Opcional: podrías guardar en historial aquí si quieres
-    // guardarEnHistorial({ id, idEstudiante, idPractica, titulo });
-
     openModal('modalBitacora');
+}
+
+// ==========================================
+// 7. MÓDULO: ESTUDIANTES
+// ==========================================
+
+async function cargarEstudiantes() {
+    try {
+        const estudiantes = await makeApiRequest('/estudiantes');
+        const tbody = document.querySelector('#tablaEstudiantes tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (!estudiantes || estudiantes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay estudiantes registrados</td></tr>';
+            return;
+        }
+
+        estudiantes.forEach(estudiante => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${escapeHtml(estudiante.idEstudiante)}</td>
+                <td>${escapeHtml(estudiante.rut)}</td>
+                <td>${escapeHtml(estudiante.nombreCompleto)}</td>
+                <td>${escapeHtml(estudiante.anoLectivo)}</td>
+                <td>${escapeHtml(estudiante.idCarrera)}</td>
+                <td>${escapeHtml(estudiante.correoInstitucional)}</td>
+                <td>
+                    <button class="btn-delete" style="padding: 5px 10px;" onclick="eliminarEstudiante(${estudiante.idEstudiante})">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error(error);
+        const tbody = document.querySelector('#tablaEstudiantes tbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
+    }
+}
+
+async function cargarCarreras() {
+    try {
+        const carreras = await makeApiRequest('/carreras');
+        const select = document.getElementById('selectCarrera');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Seleccione una carrera...</option>';
+        carreras.forEach(carrera => {
+            select.innerHTML += `<option value="${carrera.idCarrera}">${escapeHtml(carrera.nombre)}</option>`;
+        });
+    } catch (error) {
+        console.error("Error cargando carreras", error);
+    }
+}
+
+function abrirModalEstudiante() {
+    const form = document.getElementById('formEstudiante');
+    if (form) form.reset();
+    openModal('modalEstudiante');
+}
+
+async function guardarEstudiante() {
+    const datos = {
+        rut: document.getElementById('rutEstudiante').value,
+        nombreCompleto: document.getElementById('nombreEstudiante').value,
+        anoLectivo: document.getElementById('anoLectivo').value,
+        domicilio: document.getElementById('domicilioEstudiante').value,
+        telefono: document.getElementById('telefonoEstudiante').value,
+        correoInstitucional: document.getElementById('correoEstudiante').value,
+        idCarrera: document.getElementById('selectCarrera').value
+    };
+
+    if (!datos.rut || !datos.nombreCompleto || !datos.anoLectivo || !datos.correoInstitucional || !datos.idCarrera) {
+        showNotification('Complete los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resultado = await makeApiRequest('/estudiantes', 'POST', datos);
+        showNotification(resultado.message || 'Estudiante guardado', 'success');
+        closeModal('modalEstudiante');
+        cargarEstudiantes();
+    } catch (error) {
+        showNotification('Error al guardar: ' + error.message, 'error');
+    }
+}
+
+async function eliminarEstudiante(id) {
+    if (!confirm('¿Seguro que deseas eliminar este estudiante?')) return;
+    try {
+        await makeApiRequest(`/estudiantes/${id}`, 'DELETE');
+        showNotification('Estudiante eliminado', 'success');
+        cargarEstudiantes();
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
 }

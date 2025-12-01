@@ -5,9 +5,6 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
-# ==========================================
-# PATTERN 1: FACTORY - Creación de Tipos de Práctica
-# ==========================================
 
 class TipoPractica(ABC):
     """Clase abstracta para tipos de práctica"""

@@ -1,40 +1,40 @@
 <?php
-session_start(); // Siempre al inicio
+session_start();
 require_once 'config/api_config.php';
 require_once 'config/session_helper.php';
 
-// 1. BLOQUEAR ACCESO: Si no hay login, adiós.
+// 1. Seguridad
 requireLogin();
 
 $pageTitle = "Dashboard – Sistema de Prácticas UNACH";
 $activePage = "dashboard";
 
-// 2. OBTENER DATOS REALES DE PYTHON
+// 2. Obtener datos
 $api = new ApiClient();
 
-// Pedimos todas las listas para contar
+// Pedimos las listas
 $listaPracticas = $api->getPracticas();
-$listaEstudiantes = $api->getEstudiantes(); // Asegúrate de tener esta función en ApiClient o usa getPracticas
+$listaEstudiantes = $api->getEstudiantes();
 $listaCentros = $api->getCentros(); 
 
-// Calculamos estadísticas reales
+// Contadores (Validamos que sean arrays para evitar errores)
 $practicasEnCurso = is_array($listaPracticas) ? count($listaPracticas) : 0;
 $estudiantesEnPractica = is_array($listaEstudiantes) ? count($listaEstudiantes) : 0;
 $centrosPractica = is_array($listaCentros) ? count($listaCentros) : 0;
 
-// Tomamos las últimas 5 prácticas para la tabla (si hay datos)
+// Últimas 5 prácticas
 $practicasRecientes = is_array($listaPracticas) ? array_slice($listaPracticas, 0, 5) : [];
 
+// 3. INCLUIR PARTIALS (Esto arregla el diseño)
 include 'partials/header.php';
-include 'partials/sidebar.php';
+include 'partials/sidebar.php'; // <--- ESTA LÍNEA ES VITAL PARA EL MENÚ LATERAL
 ?>
+
 <main class="main">
     <header class="topbar">
         <h1>Dashboard</h1>
         <div class="user-info">
-            <span id="openUserModal" class="user-name-btn">
-                <?= htmlspecialchars($_SESSION['usuario']['nombreCompleto'] ?? $_SESSION['usuario']['Email'] ?? 'Usuario') ?>
-            </span>
+            <?= htmlspecialchars(getUsuario()['nombreCompleto'] ?? getUsuario()['Email'] ?? 'Usuario') ?>
         </div>
     </header>
 
@@ -62,29 +62,31 @@ include 'partials/sidebar.php';
             <table>
                 <thead>
                 <tr>
-                    <th>ID Estudiante</th>
+                    <th>Estudiante</th>
                     <th>Tipo</th>
-                    <th>ID Centro</th>
+                    <th>Centro</th>
                     <th>Fechas</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($practicasRecientes)): ?>
                     <tr>
-                        <td colspan="4" style="text-align: center; color: #6b7280;">
-                            No hay prácticas registradas en la Base de Datos.
+                        <td colspan="4" style="text-align: center; color: #6b7280; padding: 20px;">
+                            No hay prácticas registradas todavía.
                         </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($practicasRecientes as $p): ?>
                         <tr>
-                            <td><?= htmlspecialchars($p['idEstudiante'] ?? 'N/A') ?></td>
-                            <td><?= htmlspecialchars($p['tipo'] ?? 'N/A') ?></td>
-                            <td><?= htmlspecialchars($p['idCentroPractica'] ?? 'N/A') ?></td>
+                            <td><?= htmlspecialchars($p['NombreEstudiante'] ?? 'Desconocido') ?></td>
                             <td>
-                                <span class="badge badge-success">
+                                <span class="badge badge-warning"><?= htmlspecialchars($p['tipo'] ?? '-') ?></span>
+                            </td>
+                            <td><?= htmlspecialchars($p['NombreCentro'] ?? 'Desconocido') ?></td>
+                            <td>
+                                <small class="badge badge-success">
                                     <?= htmlspecialchars($p['fechaDeInicio'] ?? '') ?> 
-                                </span>
+                                </small>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -94,4 +96,5 @@ include 'partials/sidebar.php';
         </div>
     </section>
 </main>
+
 <?php include 'partials/footer.php'; ?>

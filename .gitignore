@@ -1,3 +1,4 @@
 #Ignorar
 .env
 Backend/.env
+Backend/__pycache__/patterns.cpython-311.pyc
