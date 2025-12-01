@@ -21,9 +21,10 @@ DB_USER=<tu_usuario>
 DB_PASSWORD=<tu_password>
 ```
 
-3. Levanta el backend desde la carpeta `Backend` (instala dependencias si hace falta):
+3. Levanta el backend desde la carpeta `Backend` (instala dependencias si hace falta).
+   En PowerShell:
 
-```bash
+```powershell
 pip install -r requirements.txt
 python main.py
 ```
@@ -32,7 +33,7 @@ Esto abrirá automáticamente la pantalla de login del sistema en el navegador.
 
 4. Levanta el frontend desde la carpeta `frontend`:
 
-```bash
+```powershell
 php -S localhost:8000
 ```
 
@@ -56,7 +57,6 @@ Luego prueba el login con las credenciales del usuario de prueba.
 
 * Factory (tipos de práctica)
 * Strategy (algoritmos de calendarización)
-* Observer (notificación de cambios en prácticas y centros)
+* Observer (registro y notificación de cambios)
 * Composite (estructura de actividades)
-
 
