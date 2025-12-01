@@ -185,9 +185,7 @@ th {
 }
 
 /* Login */
-/* =========================
-   SECCIÓN DE LOGIN
-   ========================= */
+
 .login-body {
     background-color: #111827; /* Fondo oscuro */
     display: flex;
