@@ -373,42 +373,67 @@ async function cargarRegistroSeguimiento() {
 
 async function guardarBitacora() {
     const datos = {
-        idPractica: document.getElementById('idPracticaBitacora').value,
-        idEstudiante: document.getElementById('idEstudianteBitacora').value,
+        // Leemos de los SELECTS, no de inputs de texto
+        idPractica: document.getElementById('selectPracticaBitacora').value,
+        idEstudiante: document.getElementById('selectEstudianteBitacora').value,
+        
         habilidadesDesarrolladas: document.getElementById('habilidadesBitacora').value,
-        desafíos: document.getElementById('desafiosBitacora').value,
+        desafios: document.getElementById('desafiosBitacora').value, // Sin tilde para el backend
         logros: document.getElementById('logrosBitacora').value
     };
 
+    // Validación
     if (!datos.idPractica || !datos.idEstudiante || !datos.habilidadesDesarrolladas) {
         showNotification('Completa los campos obligatorios', 'error');
         return;
     }
 
     try {
-        console.log('Enviando bitácora:', datos);
-        const res = await makeApiRequest('/bitacora', 'POST', datos);
-        showNotification(res.message || 'Bitácora guardada', 'success');
+        await makeApiRequest('/bitacora', 'POST', datos);
+        showNotification('Bitácora guardada correctamente');
         closeModal('modalBitacora');
-        window.location.reload();
+        
+        // Recargar la página para ver la nueva entrada en la tabla PHP
+        setTimeout(() => window.location.reload(), 1000); 
     } catch (error) {
-        console.error(error);
-        showNotification('Error al guardar la bitácora: ' + error.message, 'error');
+        showNotification('Error: ' + error.message, 'error');
     }
 }
 
-// Abre el modal para NUEVA entrada (limpia el formulario)
-function abrirFormularioBitacora() {
+
+async function abrirFormularioBitacora() {
+    // 1. Limpiar formulario
+    const form = document.getElementById('formBitacora');
+    if(form) form.reset();
     document.getElementById('idBitacora').value = '';
-    document.getElementById('idPracticaBitacora').value = '';
-    document.getElementById('idEstudianteBitacora').value = '';
-    document.getElementById('habilidadesBitacora').value = '';
-    document.getElementById('desafiosBitacora').value = '';
-    document.getElementById('logrosBitacora').value = '';
+    
     openModal('modalBitacora');
+
+    // 2. Cargar Prácticas en el Select
+    try {
+        const practicas = await makeApiRequest('/practicas');
+        const selectP = document.getElementById('selectPracticaBitacora');
+        selectP.innerHTML = '<option value="">Seleccione una práctica...</option>';
+        
+        practicas.forEach(p => {
+            // Mostramos ID, Nombre Estudiante y Centro para que sea fácil elegir
+            selectP.innerHTML += `<option value="${p.idPractica}">#${p.idPractica} - ${p.NombreEstudiante} (${p.NombreCentro})</option>`;
+        });
+    } catch(e) { console.error(e); }
+
+    // 3. Cargar Estudiantes en el Select
+    try {
+        const estudiantes = await makeApiRequest('/estudiantes');
+        const selectE = document.getElementById('selectEstudianteBitacora');
+        selectE.innerHTML = '<option value="">Seleccione un estudiante...</option>';
+        
+        estudiantes.forEach(e => {
+            selectE.innerHTML += `<option value="${e.idEstudiante}">${e.nombreCompleto || e.rut}</option>`;
+        });
+    } catch(e) { console.error(e); }
 }
 
-// Abre el modal desde una FILA de la tabla (para ver/editar)
+
 function abrirFormularioBitacoraDesdeFila(fila) {
     const id           = fila.dataset.id || '';
     const idEstudiante = fila.dataset.idEstudiante || '';
