@@ -82,7 +82,6 @@ def get_practicas():
     if not conn: return jsonify([]), 500
     cursor = conn.cursor()
     
-    
     query = """
     SELECT 
         P.idPractica,
@@ -150,7 +149,7 @@ def delete_practica(id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
-# --- OTROS CRUDs (Centros, Estudiantes, etc.) ---
+# --- CENTROS (CRUD) ---
 @app.route('/centros', methods=['GET'])
 def get_centros():
     conn = get_db_connection()
@@ -191,12 +190,56 @@ def delete_centro(id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+# --- ESTUDIANTES Y CARRERAS (Corregido para Modal) ---
+
 @app.route('/estudiantes', methods=['GET'])
 def get_estudiantes():
     conn = get_db_connection()
     if not conn: return jsonify([]), 500
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM Estudiante")
+    cols = [c[0] for c in cursor.description]
+    res = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(res)
+
+@app.route('/estudiantes', methods=['POST'])
+def create_estudiante():
+    try:
+        d = request.get_json()
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False}), 500
+        
+        cursor = conn.cursor()
+        # Usamos el SP sp_InsertEstudiante
+        cursor.execute("{CALL sp_InsertEstudiante (?, ?, ?, ?, ?, ?, ?)}",
+            (d.get('rut'), d.get('nombreCompleto'), d.get('anoLectivo'), 
+             d.get('domicilio'), d.get('telefono'), d.get('correoInstitucional'), d.get('idCarrera')))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Estudiante creado'}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/estudiantes/<int:id>', methods=['DELETE'])
+def delete_estudiante(id):
+    try:
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False}), 500
+        cursor = conn.cursor()
+        cursor.execute("{CALL sp_DeleteEstudiante (?)}", (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/carreras', methods=['GET'])
+def get_carreras():
+    conn = get_db_connection()
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Carrera")
     cols = [c[0] for c in cursor.description]
     res = [dict(zip(cols, row)) for row in cursor.fetchall()]
     conn.close()
