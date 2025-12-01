@@ -1,0 +1,9 @@
+INSERT INTO Carrera (idCarrera, nombre, directorCarrera, facultad) VALUES
+(1, 'Ingeniería Civil Informática', 'Dr. Claudio García', 'Facultad de Ingeniería'),
+(2, 'Enfermería', 'Mg. Carolina López', 'Facultad de Ciencias de la Salud'),
+(3, 'Kinesiología', 'Dr. Rodrigo Sánchez', 'Facultad de Ciencias de la Salud'),
+(4, 'Psicología', 'Dra. Marcela Toro', 'Facultad de Ciencias Sociales'),
+(5, 'Pedagogía en Matemática', 'Mg. Juan Soto', 'Facultad de Educación'),
+(6, 'Trabajo Social', 'Mg. Paula Herrera', 'Facultad de Ciencias Sociales'),
+(7, 'Ingeniería Comercial', 'Dr. Felipe Rivas', 'Facultad de Economía y Negocios'),
+(8, 'Nutrición y Dietética', 'Mg. Daniela Pérez', 'Facultad de Ciencias de la Salud');
