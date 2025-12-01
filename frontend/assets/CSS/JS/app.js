@@ -263,6 +263,34 @@ async function guardarPractica() {
         showNotification('Error: ' + error.message, 'error');
     }
 }
+function renderizarPracticas(practicas) {
+    const tbody = document.querySelector('#tablaPracticas tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!practicas || practicas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay prácticas registradas</td></tr>';
+        return;
+    }
+
+    practicas.forEach(p => {
+        const tr = document.createElement('tr');
+        // CAMBIO AQUÍ: Usamos las propiedades con nombre (NombreEstudiante, NombreCentro...)
+        tr.innerHTML = `
+            <td>#${p.idPractica}</td>
+            <td>${escapeHtml(p.NombreEstudiante)}</td>
+            <td><span class="badge badge-warning">${escapeHtml(p.tipo)}</span></td>
+            <td>${escapeHtml(p.NombreCentro)}</td>
+            <td>${escapeHtml(p.NombreTutor)}</td>
+            <td>${p.fechaDeInicio || '?'} / ${p.fechaDeTermino || '?'}</td>
+            <td>
+                <button class="btn-delete" style="padding: 5px 10px;" onclick="eliminarPractica(${p.idPractica})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
 async function eliminarPractica(id) {
     if(!confirm('¿Eliminar práctica?')) return;
