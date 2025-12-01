@@ -351,3 +351,73 @@ async function cargarRegistroSeguimiento() {
         });
     } catch (e) { console.error(e); }
 }
+
+// ==========================================
+// MÓDULO: BITÁCORA
+// ==========================================
+async function guardarBitacora() {
+    const datos = {
+        idPractica: document.getElementById('idPracticaBitacora').value,
+        idEstudiante: document.getElementById('idEstudianteBitacora').value,
+        habilidadesDesarrolladas: document.getElementById('habilidadesBitacora').value,
+        desafios: document.getElementById('desafiosBitacora').value,
+        logros: document.getElementById('logrosBitacora').value
+    };
+
+    if (!datos.idPractica || !datos.idEstudiante || !datos.habilidadesDesarrolladas) {
+        showNotification('Completa los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        console.log('Enviando bitácora:', datos);
+        const res = await makeApiRequest('/bitacora', 'POST', datos);
+        showNotification(res.message || 'Bitácora guardada', 'success');
+        closeModal('modalBitacora');
+        // Recargar para ver el nuevo registro en la tabla
+        window.location.reload();
+    } catch (error) {
+        console.error(error);
+        showNotification('Error al guardar la bitácora: ' + error.message, 'error');
+    }
+}
+
+// Abre el modal para NUEVA entrada (limpia el formulario)
+function abrirFormularioBitacora() {
+    // Limpiar campos
+    document.getElementById('idBitacora').value = '';
+    document.getElementById('idPracticaBitacora').value = '';
+    document.getElementById('idEstudianteBitacora').value = '';
+    document.getElementById('habilidadesBitacora').value = '';
+    document.getElementById('desafiosBitacora').value = '';
+    document.getElementById('logrosBitacora').value = '';
+
+    // Abrir modal usando el helper que ya tienes
+    openModal('modalBitacora');
+}
+
+// Abre el modal desde una FILA de la tabla (para ver/editar)
+function abrirFormularioBitacoraDesdeFila(fila) {
+    // Tomar datos desde los data-* de la fila
+    const id           = fila.dataset.id || '';
+    const idEstudiante = fila.dataset.idEstudiante || '';
+    const idPractica   = fila.dataset.idPractica || '';
+    const titulo       = fila.dataset.titulo || '';
+    const descripcion  = fila.dataset.descripcion || '';
+
+    // Rellenar campos básicos
+    document.getElementById('idBitacora').value = id;
+    document.getElementById('idPracticaBitacora').value = idPractica;
+    document.getElementById('idEstudianteBitacora').value = idEstudiante;
+
+    // Como en la tabla no tienes habilidades/desafíos/logros,
+    // por ahora usamos lo que hay:
+    document.getElementById('habilidadesBitacora').value = descripcion || '';
+    document.getElementById('desafiosBitacora').value = '';
+    document.getElementById('logrosBitacora').value = titulo || '';
+
+    // Opcional: podrías guardar en historial aquí si quieres
+    // guardarEnHistorial({ id, idEstudiante, idPractica, titulo });
+
+    openModal('modalBitacora');
+}

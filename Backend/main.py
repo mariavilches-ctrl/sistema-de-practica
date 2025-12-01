@@ -264,6 +264,34 @@ def get_bitacora():
     res = [dict(zip(cols, row)) for row in cursor.fetchall()]
     conn.close()
     return jsonify(res)
+@app.route('/bitacora', methods=['POST'])
+def create_bitacora():
+    datos = request.get_json()
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'success': False, 'message': 'Error BD'}), 500
+
+    try:
+        cursor = conn.cursor()
+        # SP_Bitacora.sql -> sp_InsertBitacora(@idPractica, @idEstudiante, @habilidadesDesarrolladas, @desafios, @logros)
+        cursor.execute(
+            "{CALL sp_InsertBitacora (?, ?, ?, ?, ?)}",
+            (
+                datos.get('idPractica'),
+                datos.get('idEstudiante'),
+                datos.get('habilidadesDesarrolladas'),
+                datos.get('desafios'),
+                datos.get('logros')
+            )
+        )
+
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Bitácora guardada correctamente'}), 201
+    except Exception as e:
+        print(f"Error SQL Bitácora: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        conn.close()
 
 # --- INICIO ---
 def abrir_nav():
