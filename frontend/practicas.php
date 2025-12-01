@@ -96,7 +96,8 @@ include 'partials/sidebar.php';
             <div class="form-group">
                 <label>Tipo de Práctica *</label>
                 <select id="selectTipo" required>
-                    <option value="Laboral">Laboral</option>
+                    <option value="Inicial">Inicial</option>
+                    <option value="Intermedia">Intermedia</option>
                     <option value="Profesional">Profesional</option>
                 </select>
             </div>

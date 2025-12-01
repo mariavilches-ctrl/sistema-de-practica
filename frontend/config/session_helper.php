@@ -7,9 +7,6 @@ if (session_status() === PHP_SESSION_NONE) {
 // Verifica si el usuario está logueado, si no, lo manda al login
 function requireLogin() {
     if (!isset($_SESSION['usuario']) && !isset($_SESSION['jwt_token'])) {
-        // Redirige al login.php que está un nivel arriba (../login.php)
-        // Nota: Si este archivo se incluye desde index.php, la ruta es relativa al index.
-        // Lo más seguro es usar rutas relativas al archivo que invoca.
         header('Location: login.php?error=' . urlencode('Debes iniciar sesión'));
         exit;
     }

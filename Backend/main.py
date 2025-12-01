@@ -308,6 +308,78 @@ def create_bitacora():
     finally:
         conn.close()
 
+# --- SESIONES ---
+@app.route('/sesiones', methods=['GET'])
+def get_sesiones():
+    conn = get_db_connection()
+    if not conn: return jsonify([]), 500
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Sesion")
+    cols = [c[0] for c in cursor.description]
+    rows = cursor.fetchall()
+    res = []
+    for row in rows:
+        sesion = dict(zip(cols, row))
+        # Convertir objetos time a string para JSON serialization
+        if 'horaInicio' in sesion and sesion['horaInicio']:
+            sesion['horaInicio'] = str(sesion['horaInicio'])
+        if 'horaTermino' in sesion and sesion['horaTermino']:
+            sesion['horaTermino'] = str(sesion['horaTermino'])
+        res.append(sesion)
+    conn.close()
+    return jsonify(res)
+
+@app.route('/sesiones', methods=['POST'])
+def create_sesion():
+    try:
+        d = request.get_json()
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False}), 500
+        cursor = conn.cursor()
+        cursor.execute("{CALL sp_InsertSesion (?, ?, ?, ?, ?, ?, ?)}",
+            (d.get('idPractica'), d.get('fecha'), d.get('horaInicio'), d.get('horaTermino'), d.get('horas'), d.get('actividad'), d.get('estado')))
+        # Consumir cualquier result set que pueda retornar el SP para evitar errores de serialización
+        try:
+            while cursor.nextset():
+                pass
+        except:
+            pass
+        conn.commit()
+        conn.close()
+        calendario_observable.notificar_observadores('sesion_creada', d)
+        return jsonify({'success': True, 'message': 'Sesión creada'}), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/sesiones/<int:id>', methods=['PUT'])
+def update_sesion(id):
+    try:
+        d = request.get_json()
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False}), 500
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Sesion SET fecha=?, horaInicio=?, horaTermino=?, horas=?, actividad=?, estado=? WHERE idSesion=?",
+            (d.get('fecha'), d.get('horaInicio'), d.get('horaTermino'), d.get('horas'), d.get('actividad'), d.get('estado'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Sesión actualizada'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/sesiones/<int:id>', methods=['DELETE'])
+def delete_sesion(id):
+    try:
+        conn = get_db_connection()
+        if not conn: return jsonify({'success': False}), 500
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Sesion WHERE idSesion=?", (id,))
+        conn.commit()
+        conn.close()
+        calendario_observable.notificar_observadores('sesion_eliminada', {'id': id})
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 def abrir_nav():
     webbrowser.open_new("http://localhost/sistema-de-practica/frontend/login.php")
 

@@ -21,7 +21,7 @@ include 'partials/sidebar.php';
 
     <section class="content">
         <div class="section-header">
-            <h2>Tipos Disponibles (Factory Pattern)</h2>
+            <h2>Tipos Disponibles</h2>
         </div>
 
         <div class="table-wrapper">
