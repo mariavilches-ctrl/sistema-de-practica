@@ -2,17 +2,29 @@
 
 Sistema para gestionar prácticas profesionales: organiza tipos, centros, sesiones, estudiantes y seguimiento de horas. Incluye calendarización automática, registro de bitácoras, CRUD de entidades y un backend en Python conectado a SQL Server.
 
-Seed para desarrollo local: `Base De Datos/seed_local.sql` — crea tablas mínimas y un usuario de prueba ([test@example.com](mailto:test@example.com) / password123).
+Para ejecutar este proyecto localmente, necesitas tener instalado el siguiente software:
 
-Instrucciones rápidas para pruebas locales:
+### Backend (Python)
+* **Python 3.10+**: Lenguaje base del servidor.
+* **Librerías de Python**:
+    * `Flask`: Framework web para la API.
+    * `Flask-CORS`: Para permitir la conexión entre PHP y Python.
+    * `pyodbc`: Driver para conectar Python con SQL Server.
+    * `python-dotenv`: Para leer las credenciales seguras desde el archivo `.env`.
+    
+    ### Base de Datos
+* **Microsoft SQL Server**: Motor de base de datos.
+* **ODBC Driver 17 for SQL Server**: Controlador necesario para que Windows permita la conexión (generalmente viene instalado con SQL Server Management Studio).
 
-1. Ejecuta el seed (ajusta tu conexión):
+### Frontend
+* **XAMPP (o similar)**: Servidor Apache con soporte para PHP 7.4 o superior.
+* **Navegador Web Moderno**: Chrome, Edge o Firefox.
+Para instalar dependencias busque el requirements.txt
+cd Backend
+pip install -r requirements.txt
 
-```powershell
-sqlcmd -S <DB_SERVER> -d <DB_NAME> -U <DB_USER> -P '<DB_PASSWORD>' -i 'Base De Datos\\seed_local.sql'
-```
-
-2. Configura las variables de entorno del backend creando un archivo `.env` dentro de la carpeta `Backend`:
+2. Configura las variables de entorno del backend creando un archivo `.env` dentro de la carpeta `Backend`
+    Si no tienes el .env debes crearlo de la siguiente manera:
 
 ```
 DB_SERVER=<tu_servidor>

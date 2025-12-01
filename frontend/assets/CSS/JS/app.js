@@ -402,26 +402,26 @@ async function guardarBitacora() {
 
 
 async function abrirFormularioBitacora() {
-    // 1. Limpiar formulario
+   
     const form = document.getElementById('formBitacora');
     if(form) form.reset();
     document.getElementById('idBitacora').value = '';
     
     openModal('modalBitacora');
 
-    // 2. Cargar Prácticas en el Select
+   
     try {
         const practicas = await makeApiRequest('/practicas');
         const selectP = document.getElementById('selectPracticaBitacora');
         selectP.innerHTML = '<option value="">Seleccione una práctica...</option>';
         
         practicas.forEach(p => {
-            // Mostramos ID, Nombre Estudiante y Centro para que sea fácil elegir
+           
             selectP.innerHTML += `<option value="${p.idPractica}">#${p.idPractica} - ${p.NombreEstudiante} (${p.NombreCentro})</option>`;
         });
     } catch(e) { console.error(e); }
 
-    // 3. Cargar Estudiantes en el Select
+   
     try {
         const estudiantes = await makeApiRequest('/estudiantes');
         const selectE = document.getElementById('selectEstudianteBitacora');
