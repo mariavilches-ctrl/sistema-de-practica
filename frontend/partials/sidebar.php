@@ -20,6 +20,10 @@ if (!isset($activePage)) {
             <i class="fas fa-building"></i> Centros de Práctica
         </a>
 
+        <a href="alumno.php" class="menu-item <?= $activePage === 'alumnos' ? 'active' : '' ?>">
+            <i class="fas fa-user-graduate"></i> Estudiantes
+        </a>
+
         <a href="tipos.php" class="menu-item <?= $activePage === 'tipos' ? 'active' : '' ?>">
             <i class="fas fa-shapes"></i> Tipos de Práctica
         </a>

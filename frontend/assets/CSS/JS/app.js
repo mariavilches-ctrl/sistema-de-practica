@@ -331,10 +331,10 @@ async function cargarRegistroSeguimiento() {
         const res = await makeApiRequest('/registro-seguimiento');
         const tbody = document.querySelector('#tablaRegistro tbody');
         if(!tbody) return;
-        
+
         tbody.innerHTML = '';
         const logs = res.data || [];
-        
+
         if(logs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No hay eventos recientes</td></tr>';
             return;
@@ -350,4 +350,101 @@ async function cargarRegistroSeguimiento() {
             tbody.appendChild(tr);
         });
     } catch (e) { console.error(e); }
+}
+
+// ==========================================
+// 6. MÓDULO: ESTUDIANTES
+// ==========================================
+
+async function cargarEstudiantes() {
+    try {
+        const estudiantes = await makeApiRequest('/estudiantes');
+        const tbody = document.querySelector('#tablaEstudiantes tbody');
+        if (!tbody) return; // Si no estamos en la página de estudiantes, salir
+
+        tbody.innerHTML = '';
+
+        if (!estudiantes || estudiantes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay estudiantes registrados</td></tr>';
+            return;
+        }
+
+        estudiantes.forEach(estudiante => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${escapeHtml(estudiante.idEstudiante)}</td>
+                <td>${escapeHtml(estudiante.rut)}</td>
+                <td>${escapeHtml(estudiante.nombreCompleto)}</td>
+                <td>${escapeHtml(estudiante.anoLectivo)}</td>
+                <td>${escapeHtml(estudiante.idCarrera)}</td>
+                <td>${escapeHtml(estudiante.correoInstitucional)}</td>
+                <td>
+                    <button class="btn-delete" style="padding: 5px 10px;" onclick="eliminarEstudiante(${estudiante.idEstudiante})">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error(error);
+        const tbody = document.querySelector('#tablaEstudiantes tbody');
+        if(tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
+    }
+}
+
+async function cargarCarreras() {
+    try {
+        const carreras = await makeApiRequest('/carreras');
+        const select = document.getElementById('selectCarrera');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Seleccione una carrera...</option>';
+        carreras.forEach(carrera => {
+            select.innerHTML += `<option value="${carrera.idCarrera}">${escapeHtml(carrera.nombre)}</option>`;
+        });
+    } catch (error) {
+        console.error("Error cargando carreras", error);
+    }
+}
+
+function abrirModalEstudiante() {
+    const form = document.getElementById('formEstudiante');
+    if (form) form.reset();
+    openModal('modalEstudiante');
+}
+
+async function guardarEstudiante() {
+    const datos = {
+        rut: document.getElementById('rutEstudiante').value,
+        nombreCompleto: document.getElementById('nombreEstudiante').value,
+        anoLectivo: document.getElementById('anoLectivo').value,
+        domicilio: document.getElementById('domicilioEstudiante').value,
+        telefono: document.getElementById('telefonoEstudiante').value,
+        correoInstitucional: document.getElementById('correoEstudiante').value,
+        idCarrera: document.getElementById('selectCarrera').value
+    };
+
+    if (!datos.rut || !datos.nombreCompleto || !datos.anoLectivo || !datos.correoInstitucional || !datos.idCarrera) {
+        showNotification('Complete los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        const resultado = await makeApiRequest('/estudiantes', 'POST', datos);
+        showNotification(resultado.message || 'Estudiante guardado', 'success');
+        closeModal('modalEstudiante');
+        cargarEstudiantes();
+    } catch (error) {
+        showNotification('Error al guardar: ' + error.message, 'error');
+    }
+}
+
+async function eliminarEstudiante(id) {
+    if (!confirm('¿Seguro que deseas eliminar este estudiante?')) return;
+    try {
+        await makeApiRequest(`/estudiantes/${id}`, 'DELETE');
+        showNotification('Estudiante eliminado', 'success');
+        cargarEstudiantes();
+    } catch (error) {
+        showNotification('Error: ' + error.message, 'error');
+    }
 }
