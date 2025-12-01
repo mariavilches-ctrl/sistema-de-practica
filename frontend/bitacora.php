@@ -3,23 +3,23 @@ session_start();
 require_once 'config/api_config.php';
 require_once 'config/session_helper.php';
 
-// 1. Proteger la página
+
 requireLogin();
 
 $pageTitle = "Bitácora – Sistema de Prácticas UNACH";
-$activePage = "bitacora"; // Variable para que el sidebar sepa dónde estamos
+$activePage = "bitacora"; 
 
-// 2. Obtener datos de la API
+// Obtener datos de la API
 $api = new ApiClient();
 $bitacora = $api->getBitacora();
 
-// Manejo de errores si la API falla o devuelve error
+
 if (isset($bitacora['error']) || !is_array($bitacora)) {
     $bitacora = [];
     $errorMessage = "No se pudieron cargar los registros de la bitácora.";
 }
 
-// 3. Inclusiones correctas (buscando en la carpeta 'partials')
+
 include 'partials/header.php';
 include 'partials/sidebar.php';
 ?>

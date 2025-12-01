@@ -3,31 +3,31 @@ session_start();
 require_once 'config/api_config.php';
 require_once 'config/session_helper.php';
 
-// 1. Seguridad
+
 requireLogin();
 
 $pageTitle = "Dashboard – Sistema de Prácticas UNACH";
 $activePage = "dashboard";
 
-// 2. Obtener datos
+
 $api = new ApiClient();
 
-// Pedimos las listas
+
 $listaPracticas = $api->getPracticas();
 $listaEstudiantes = $api->getEstudiantes();
 $listaCentros = $api->getCentros(); 
 
-// Contadores (Validamos que sean arrays para evitar errores)
+// Contadores 
 $practicasEnCurso = is_array($listaPracticas) ? count($listaPracticas) : 0;
 $estudiantesEnPractica = is_array($listaEstudiantes) ? count($listaEstudiantes) : 0;
 $centrosPractica = is_array($listaCentros) ? count($listaCentros) : 0;
 
-// Últimas 5 prácticas
+
 $practicasRecientes = is_array($listaPracticas) ? array_slice($listaPracticas, 0, 5) : [];
 
-// 3. INCLUIR PARTIALS (Esto arregla el diseño)
+
 include 'partials/header.php';
-include 'partials/sidebar.php'; // <--- ESTA LÍNEA ES VITAL PARA EL MENÚ LATERAL
+include 'partials/sidebar.php'; 
 ?>
 
 <main class="main">

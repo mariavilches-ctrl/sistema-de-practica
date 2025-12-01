@@ -1,13 +1,10 @@
 
 
-// app.js - Sistema CRUD Completo
-// Ubicación: frontend/assets/JS/app.js
+
 
 const API_BASE_URL = 'http://localhost:5000';
 
-// ==========================================
-// 1. FUNCIONES GENERALES (Helpers)
-// ==========================================
+
 
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -46,7 +43,7 @@ async function makeApiRequest(endpoint, method = 'GET', data = null) {
 
         const response = await fetch(API_BASE_URL + endpoint, options);
         
-        // Si la respuesta no es OK, lanzamos error
+        // Si la respuesta no lanzamos error
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || `HTTP ${response.status}`);
@@ -69,7 +66,7 @@ function showNotification(message, type = 'success') {
     notification.className = `alert alert-${type} fixed-notification`;
     notification.textContent = message;
     
-    // Estilos para que flote
+    
     Object.assign(notification.style, {
         position: 'fixed',
         top: '20px',
@@ -93,9 +90,7 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-// ==========================================
-// 2. MÓDULO: CENTROS DE PRÁCTICA
-// ==========================================
+
 
 async function cargarCentros() {
     try {
@@ -172,9 +167,7 @@ async function eliminarCentro(id) {
     }
 }
 
-// ==========================================
-// 3. MÓDULO: PRÁCTICAS
-// ==========================================
+
 
 async function cargarPracticas() {
     try {
@@ -276,7 +269,7 @@ function renderizarPracticas(practicas) {
 
     practicas.forEach(p => {
         const tr = document.createElement('tr');
-        // CAMBIO AQUÍ: Usamos las propiedades con nombre (NombreEstudiante, NombreCentro...)
+        
         tr.innerHTML = `
             <td>#${p.idPractica}</td>
             <td>${escapeHtml(p.NombreEstudiante)}</td>
@@ -303,9 +296,7 @@ async function eliminarPractica(id) {
     }
 }
 
-// ==========================================
-// 4. MÓDULO: CALENDARIZACIÓN Y TIPOS
-// ==========================================
+
 
 async function cargarTiposPractica() {
     try {
@@ -350,9 +341,7 @@ async function generarCalendario() {
     } catch (e) { showNotification(e.message, 'error'); }
 }
 
-// ==========================================
-// 5. MÓDULO: SEGUIMIENTO (OBSERVER)
-// ==========================================
+
 
 async function cargarRegistroSeguimiento() {
     try {
@@ -380,9 +369,7 @@ async function cargarRegistroSeguimiento() {
     } catch (e) { console.error(e); }
 }
 
-// ==========================================
-// 6. MÓDULO: BITÁCORA
-// ==========================================
+
 
 async function guardarBitacora() {
     const datos = {
@@ -439,9 +426,7 @@ function abrirFormularioBitacoraDesdeFila(fila) {
     openModal('modalBitacora');
 }
 
-// ==========================================
-// 7. MÓDULO: ESTUDIANTES
-// ==========================================
+
 
 async function cargarEstudiantes() {
     try {
@@ -536,44 +521,28 @@ async function eliminarEstudiante(id) {
     }
 }
 
-// ==========================================
-// 8. MÓDULO: SESIONES
-// ==========================================
+//sesiones
 
 async function cargarSesiones() {
     try {
-        const sesiones = await makeApiRequest('/sesiones');
+        const sesiones = await makeApiRequest('/sesiones'); // Asegúrate de tener esta ruta GET en Python
         const tbody = document.querySelector('#tablaSesiones tbody');
         if (!tbody) return;
 
-        tbody.innerHTML = '';
-        if (!sesiones || sesiones.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay sesiones programadas</td></tr>';
-            return;
-        }
+        tbody.innerHTML = sesiones.length ? '' : '<tr><td colspan="7" style="text-align:center">No hay sesiones programadas</td></tr>';
 
-        sesiones.forEach(sesion => {
-            const horario = `${sesion.horaInicio || ''} - ${sesion.horaTermino || ''}`;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${sesion.fecha}</td>
-                <td>${horario}</td>
-                <td>${sesion.idPractica}</td>
-                <td>${escapeHtml(sesion.actividad || '-')}</td>
-                <td>${sesion.horas}</td>
-                <td><span class="badge">${sesion.estado}</span></td>
-                <td>
-                    <button class="btn-edit" onclick="editarSesion(${sesion.idSesion})">Editar</button>
-                    <button class="btn-delete" onclick="eliminarSesion(${sesion.idSesion})">Eliminar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+        sesiones.forEach(s => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${s.fecha}</td>
+                    <td>${s.horaInicio || '--'} - ${s.horaTermino || '--'}</td>
+                    <td>#${s.idPractica}</td> <td>${escapeHtml(s.actividad)}</td>
+                    <td>${s.horas} hrs</td>
+                    <td><span class="badge badge-success">${s.estado || 'Programada'}</span></td>
+                    <td>-</td>
+                </tr>`;
         });
-    } catch (error) {
-        console.error(error);
-        const tbody = document.querySelector('#tablaSesiones tbody');
-        if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center">Error: ${error.message}</td></tr>`;
-    }
+    } catch (e) { console.error(e); }
 }
 
 function abrirFormularioSesion() {
@@ -606,37 +575,49 @@ async function editarSesion(id) {
     }
 }
 
+async function abrirModalSesion() {
+    openModal('modalSesion');
+    
+    
+    try {
+        const practicas = await makeApiRequest('/practicas');
+        const select = document.getElementById('selectPracticaSesion');
+        select.innerHTML = '<option value="">Seleccione una práctica...</option>';
+        
+        practicas.forEach(p => {
+            
+            select.innerHTML += `<option value="${p.idPractica}">#${p.idPractica} - ${p.NombreEstudiante}</option>`;
+        });
+    } catch (e) {
+        console.error("Error cargando prácticas", e);
+        document.getElementById('selectPracticaSesion').innerHTML = '<option>Error al cargar</option>';
+    }
+}
+
 async function guardarSesion() {
-    const idSesion = document.getElementById('idSesion').value;
     const datos = {
-        idPractica: document.getElementById('idPracticaSesion').value,
+        
+        idPractica: document.getElementById('selectPracticaSesion').value,
         fecha: document.getElementById('fechaSesion').value,
-        horaInicio: document.getElementById('horaInicioSesion').value,
-        horaTermino: document.getElementById('horaTerminoSesion').value,
+        horaInicio: document.getElementById('horaInicio').value,
+        horaTermino: document.getElementById('horaTermino').value,
         horas: document.getElementById('horasSesion').value,
         actividad: document.getElementById('actividadSesion').value,
-        estado: document.getElementById('estadoSesion').value
+        estado: 'Programada'
     };
 
-    if (!datos.idPractica || !datos.fecha || !datos.horaInicio || !datos.horaTermino || !datos.horas) {
-        showNotification('Complete los campos obligatorios', 'error');
+    if (!datos.idPractica || !datos.fecha) {
+        showNotification('Seleccione una práctica y una fecha', 'error');
         return;
     }
 
     try {
-        if (idSesion) {
-            // Actualizar
-            await makeApiRequest(`/sesiones/${idSesion}`, 'PUT', datos);
-            showNotification('Sesión actualizada', 'success');
-        } else {
-            // Crear
-            await makeApiRequest('/sesiones', 'POST', datos);
-            showNotification('Sesión creada', 'success');
-        }
+        await makeApiRequest('/sesiones', 'POST', datos);
+        showNotification('Sesión agregada correctamente');
         closeModal('modalSesion');
         cargarSesiones();
-    } catch (error) {
-        showNotification('Error al guardar: ' + error.message, 'error');
+    } catch (e) {
+        showNotification('Error: ' + e.message, 'error');
     }
 }
 

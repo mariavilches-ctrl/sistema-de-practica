@@ -1,7 +1,7 @@
 <?php
 // Configuración de la API del backend
-define('API_BASE_URL', 'http://localhost:5000'); // Asegúrate que Python corre en el puerto 5000
-define('API_TIMEOUT', 30); // segundos
+define('API_BASE_URL', 'http://localhost:5000'); 
+define('API_TIMEOUT', 30); 
 
 class ApiClient {
     private $baseUrl;
@@ -17,9 +17,7 @@ class ApiClient {
         $this->token = $_SESSION['jwt_token'] ?? null;
     }
 
-    /**
-     * Realiza una petición HTTP a la API
-     */
+
     public function makeRequest($endpoint, $method = 'GET', $data = null) {
         $url = $this->baseUrl . $endpoint;
         
@@ -28,7 +26,7 @@ class ApiClient {
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_TIMEOUT, API_TIMEOUT);
         
-        // Importante: Desactivar verificación SSL si usas localhost sin certificados
+        
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
         
         $headers = [
@@ -51,12 +49,12 @@ class ApiClient {
         $curlError = curl_error($ch);
         curl_close($ch);
         
-        // Manejo de errores de conexión (ej: Python apagado)
+        
         if ($curlError) {
             return ['error' => true, 'message' => 'Error de conexión con Backend: ' . $curlError];
         }
         
-        // Manejo de errores HTTP (400, 401, 500)
+        // Manejo de errores HTTP 
         if ($httpCode >= 400) {
             $errorData = json_decode($response, true);
             return [
@@ -69,7 +67,7 @@ class ApiClient {
         return json_decode($response, true) ?? [];
     }
     
-    // --- MÉTODOS DE LA API ---
+   
 
     public function login($correo, $password) {
         return $this->makeRequest('/login', 'POST', [
@@ -98,7 +96,7 @@ class ApiClient {
         return $this->makeRequest('/bitacora');
     }
 
-    // --- AGREGADOS PARA QUE EL DASHBOARD FUNCIONE ---
+    
     public function getEstudiantes() {
         return $this->makeRequest('/estudiantes');
     }
