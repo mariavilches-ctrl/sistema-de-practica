@@ -21,7 +21,7 @@ include 'partials/sidebar.php';
 
     <section class="content">
         <div class="section-header">
-            <h2>Eventos Registrados (Observer Pattern)</h2>
+            <h2>Eventos Registrados</h2>
             <button class="btn-primary" onclick="cargarRegistroSeguimiento()">Actualizar</button>
         </div>
 

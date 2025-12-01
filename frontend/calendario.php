@@ -38,16 +38,16 @@ include 'partials/sidebar.php';
         </div>
 
         <div id="tab-generar" class="tab-content active">
-            <div class="section-header"><h2>Generar Calendario (Strategy)</h2></div>
+            <div class="section-header"><h2>Generar Calendario</h2></div>
 
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <div class="form-group">
                         <label>Estrategia</label>
                         <select id="estrategiaCalendario" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                            <option value="uniforme">📊 Uniforme</option>
-                            <option value="intensiva">⚡ Intensiva</option>
-                            <option value="progresiva">📈 Progresiva</option>
+                            <option value="uniforme"> Uniforme</option>
+                            <option value="intensiva"> Intensiva</option>
+                            <option value="progresiva"> Progresiva</option>
                         </select>
                     </div>
                     <div class="form-group">
